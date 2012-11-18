@@ -65,8 +65,7 @@ class IndexController extends Zend_Controller_Action
                             ->getElementsByTagName('div')->item(1)
                             ->getElementsByTagName('font')->item(0)
                             ->textContent;
-                    $this->save($user[$id], $id);
-                    return;
+                    //return;
                     //Zend_Debug::dump(array_keys($user[$id]));
                 } elseif ($j == 2) {
                     // ultimo acesso
@@ -78,8 +77,8 @@ class IndexController extends Zend_Controller_Action
                 }
                 $j++;
             }
+            $this->save($user[$id], $id);
         }
-        Zend_Debug::dump($user);
     }
     
     protected function save($usuario, $id) {
@@ -90,14 +89,42 @@ class IndexController extends Zend_Controller_Action
                 foreach($value as $chave => $valor) {
                     $insert['usuario'][$chave]=$valor;
                 }
+            } elseif($key == 'ultimo_acesso') {
+                $child = $this->db->fetchRow("SELECT id FROM $key where $key = '$value'");
+                if(!$child) {
+                    $this->db->insert($key, array($key => $value));
+                }
+                unset($usuario['ultimo_acesso']);
+            } elseif($key == 'denominacao') {
+                $child = $this->db->fetchRow("SELECT id FROM $key where $key = '$value'");
+                if(!$child) {
+                    $this->db->insert($key, array($key => $value));
+                    $child_id = $this->db->lastInsertId();
+                } else {
+                    $child_id = $child['id'];
+                }
+                unset($usuario['denominacao']);
+                $usuario['denominacao_id'] = $child_id;
             } elseif($key == 'denominacao' || is_array($value)) {
-                //$create .= "    {$key}_id INTEGER,\n";
-                $this->db->fetchAll("SELECT id FROM $key where id = ");
+                $this->db->delete('usuario_'.$key, 'usuario_id = '.$id);
+                foreach($value as $item) {
+                    $child = $this->db->fetchRow("SELECT id FROM $key where $key = '$item'");
+                    if(!$child) {
+                        $this->db->insert($key, array($key => $item));
+                        $child_id = $this->db->lastInsertId();
+                    } else {
+                        $child_id = $child['id'];
+                    }
+                    $this->db->insert('usuario_'.$key, array(
+                        $key.'_id' => $child_id,
+                        'usuario_id' => $id
+                    ));
+                }
             } else {
                 $insert['usuario'][$key]=$value;
             }
         }
-        if($this->db->fetchAll('SELECT id FROM usuario where id = '.$id)) {
+        if($this->db->fetchRow('SELECT id FROM usuario where id = '.$id)) {
             unset($insert['usuario']['id']);
             $this->db->update('usuario', $insert['usuario']);
         } else {
@@ -106,37 +133,113 @@ class IndexController extends Zend_Controller_Action
     }
     
     protected function createTable($usuario) {
-        $create = "CREATE TABLE IF NOT EXISTS usuario(\n";
-        $create_sub = '';
-        $create .= "    id INTEGER PRIMARY KEY,\n";
-        foreach($usuario as $key => $value) {
-            if($key == 'textos') {
-                foreach($value as $chave => $valor) {
-                    $create .= "    $chave TEXT,\n";
-                }
-            } elseif($key == 'denominacao') {
-                $create .= "    {$key}_id INTEGER,\n";
-
-                $create_sub = "CREATE TABLE IF NOT EXISTS $key(\n";
-                $create_sub.= "    id INTEGER PRIMARY KEY,\n";
-                $create_sub.= "    $key varchar(255)\n";
-                $create_sub.= ");\n";
-                $this->db->query($create_sub);
-            } elseif(is_array($value)) {
-                $create .= "    {$key}_id INTEGER,\n";
-
-                $create_sub = "CREATE TABLE IF NOT EXISTS $key(\n";
-                $create_sub.= "    id INTEGER PRIMARY KEY,\n";
-                $create_sub.= "    $key varchar(255)\n";
-                $create_sub.= ");\n";
-                $this->db->query($create_sub);
-            } else {
-                $create .= "    $key varchar(255),\n";
-            }
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS ultimo_acesso(
+                id INTEGER PRIMARY KEY,
+                ultimo_acesso varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS denominacao(
+                id INTEGER PRIMARY KEY,
+                denominacao varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS estado_civil_de_quem_eu_busco(
+                id INTEGER PRIMARY KEY,
+                estado_civil_de_quem_eu_busco varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS usuario_estado_civil_de_quem_eu_busco(
+                estado_civil_de_quem_eu_busco_id INTEGER,
+                usuario_id INTEGER,
+                PRIMARY KEY(estado_civil_de_quem_eu_busco_id, usuario_id)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS tenho_maior_interesse_em_pessoas_das_seguintes_formacoes(
+                id INTEGER PRIMARY KEY,
+                tenho_maior_interesse_em_pessoas_das_seguintes_formacoes varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS usuario_tenho_maior_interesse_em_pessoas_das_seguintes_formacoes(
+                tenho_maior_interesse_em_pessoas_das_seguintes_formacoes_id INTEGER,
+                usuario_id INTEGER,
+                PRIMARY KEY(tenho_maior_interesse_em_pessoas_das_seguintes_formacoes_id, usuario_id)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS gostaria_que_a_pessoa_que_busco_fosse_de_uma_das_seguintes_denominacoes(
+                id INTEGER PRIMARY KEY,
+                gostaria_que_a_pessoa_que_busco_fosse_de_uma_das_seguintes_denominacoes varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS usuario_gostaria_que_a_pessoa_que_busco_fosse_de_uma_das_seguintes_denominacoes(
+                gostaria_que_a_pessoa_que_busco_fosse_de_uma_das_seguintes_denominacoes_id INTEGER,
+                usuario_id INTEGER,
+                PRIMARY KEY(gostaria_que_a_pessoa_que_busco_fosse_de_uma_das_seguintes_denominacoes_id, usuario_id)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS a_frequencia_na_igreja_que_mais_se_encaixa_no_meu_perfil_e(
+                id INTEGER PRIMARY KEY,
+                a_frequencia_na_igreja_que_mais_se_encaixa_no_meu_perfil_e varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS usuario_a_frequencia_na_igreja_que_mais_se_encaixa_no_meu_perfil_e(
+                a_frequencia_na_igreja_que_mais_se_encaixa_no_meu_perfil_e_id INTEGER,
+                usuario_id INTEGER,
+                PRIMARY KEY(a_frequencia_na_igreja_que_mais_se_encaixa_no_meu_perfil_e_id, usuario_id)
+            );
+        ";
+        foreach($create_sub as $create) {
+            $this->db->query($create);
         }
-        $create = trim($create, ",\n");
-        $create .= "\n);";
-        $ok = $this->db->query($create);
+        $create = "
+            CREATE TABLE IF NOT EXISTS usuario(
+                id INTEGER PRIMARY KEY,
+                url_thumb varchar(255),
+                apelido varchar(255),
+                sexo varchar(255),
+                idade varchar(255),
+                pais varchar(255),
+                estado varchar(255),
+                cidade varchar(255),
+                altura varchar(255),
+                peso varchar(255),
+                tipo_fisico varchar(255),
+                tom_de_pele varchar(255),
+                olhos varchar(255),
+                estado_civil varchar(255),
+                formacao varchar(255),
+                profissao varchar(255),
+                nacionalidade varchar(255),
+                tem_filhos varchar(255),
+                quer_ter_filhos varchar(255),
+                fuma varchar(255),
+                bebe varchar(255),
+                importancia_de_religiao_para_mim varchar(255),
+                meu_estilo varchar(255),
+                frequencia_na_igreja varchar(255),
+                considero_me_uma_pessoa TEXT,
+                estou_a_procura_de TEXT,
+                meus_filmes_favoritos TEXT,
+                minhas_musicas_favoritas TEXT,
+                o_que_eu_gosto_de_fazer TEXT,
+                sexo_procurado varchar(255),
+                localidade varchar(255),
+                acho_que_a_faixa_etaria_que_mais_se_encaixa_ao_meu_perfil_e varchar(255),
+                busco_uma_pessoa_com_altura varchar(255),
+                acho_que_o_peso_ideal_de_quem_eu_busco_deve_ser varchar(255),
+                o_tipo_fisico_de_quem_busco_deve_ser varchar(255),
+                busco_uma_pessoa_com_tom_de_pele varchar(255),
+                acho_que_os_olhos_ideais_de_quem_eu_busco_devem_ser varchar(255),
+                gostaria_que_pessoa_que_busco_tivesse_a_seguinte_situacao_em_relacao_a_filhos varchar(255),
+                busco_uma_pessoa_que_tenha_a_seguinte_relacao_a_filhos_no_futuro varchar(255),
+                em_relacao_a_fumar_quero_alguem_que varchar(255),
+                em_relacao_a_beber_busco_alguem_que varchar(255),
+                idealmente_a_pessoa_que_busco_deve_ter_o_seguinte_estilo varchar(255),
+                url_perfil varchar(255),
+                status varchar(255)
+            );
+        ";
+        $this->db->query($create);
     }
 
 
@@ -167,7 +270,7 @@ class IndexController extends Zend_Controller_Action
         // varias denominações
         //$id = 380885;
         // eu
-        $id = 232785;
+        // $id = 232785;
         // gringo
         //$id = 2340755;
         //$id = 2246224;
@@ -276,8 +379,9 @@ class IndexController extends Zend_Controller_Action
                 ))
                 ->setMethod(Zend_Http_Client::POST);
         $response = $client->request();
-
-        $this->sessionNamespace->cookieJar = $client->getCookieJar();
+        if($response->isSuccessful()) {
+            $this->sessionNamespace->cookieJar = $client->getCookieJar();
+        }
     }
 
 
