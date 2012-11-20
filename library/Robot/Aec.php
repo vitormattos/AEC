@@ -17,6 +17,12 @@ class Robot_Aec {
      */
     protected $db = null;
     
+    /**
+     * configurações extras do sistema
+     * @var Zend_Config
+     */
+    protected $config = array();
+    
     public function __construct() {
         $bootstrap = Zend_Controller_Front::getInstance()->getParam('bootstrap');
         $this->config = new Zend_Config_Ini(

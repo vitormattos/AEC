@@ -27,6 +27,12 @@ class IndexController extends Zend_Controller_Action
      *
      */
     protected $aec = null;
+    
+    /**
+     * configurações extras do sistema
+     * @var Zend_Config
+     */
+    protected $config = array();
 
     public function init()
     {
