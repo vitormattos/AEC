@@ -1,3 +1,4 @@
 nbproject
 *.sqlite
-scripts/log
+scripts/log*
+*~

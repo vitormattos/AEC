@@ -1,0 +1,67 @@
+<?php
+foreach($this->users as $user) {
+    ?>
+    <table border="1" style="width: 100%">
+    <tr>
+    <td>
+    <a href="<?php echo $user['url_perfil'];?>" target="blank"><?php
+    if(isset($user['img_url'])) {
+        foreach($user['img_url'] as $img) {
+            ?><img src="<?php echo $img['url'];?>" alt="<?php echo $img['alt'];?>" /><?php
+        }
+    } else {
+        echo $user['apelido'];
+    }
+    ?></a>
+    </td>
+    <td style="width: 300px">
+        <table border="1">
+            <tr>
+                <td>Apelido</td>
+                <td>
+                    <a href="/index/perfil/?id=<?php echo $user['id'];?>">
+                        <?php echo $user['apelido'];?>
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td>Estado Civil</td><td><?php echo $user['estado_civil'];?></td>
+            </tr>
+            <tr>
+                <td>Idade</td><td><?php echo $user['idade'];?></td>
+            </tr>
+            <tr>
+                <td>Altura</td><td><?php echo $user['altura'];?></td>
+            </tr>
+            <tr>
+                <td>Peso</td><td><?php echo $user['peso'];?></td>
+            </tr>
+            <tr>
+                <td>Quer ter filhos</td><td><?php echo $user['quer_ter_filhos'];?></td>
+            </tr>
+            <tr>
+                <td>Denominacao</td><td><?php echo $user['denominacao'];?></td>
+            </tr>
+            <tr>
+                <td>Profissao</td><td><?php echo $user['profissao'];?></td>
+            </tr>
+            <tr>
+                <td>Formacao</td><td><?php echo $user['formacao'];?></td>
+            </tr>
+            <tr>
+                <td>Updated</td><td><?php echo $user['updated'];?></td>
+            </tr>
+            <tr>
+                <td>Ultimo acesso</td><td><?php echo $user['ultimo_acesso'];?></td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td>
+                    <img src="/img/icon_<?php echo strtolower($user['status']); ?>.gif">
+                    <?php echo $user['status'];?>
+                </td>
+            </tr>
+        </table>
+    </td>
+    </tr></table><?
+}

@@ -1,9 +1,11 @@
 <?php
 
 $shm = shm_attach(12356, 524288);
+$pilha = @shm_get_var($shm, 1);
 do {
     $pilha = @shm_get_var($shm, 1);
-    foreach($pilha as $id => $thumb_url) {
+    if(is_array($pilha))
+    foreach($pilha as $id => $data) {
         $ignore = shm_get_var($shm, 2)?:array();
         if(array_key_exists($id, $ignore)) continue;
         $dir = '';
@@ -13,13 +15,15 @@ do {
         }
         $img_dir = realpath(dirname(__FILE__).'/../public/img/');
         if(!is_dir($img_dir.'/'.$dir)) mkdir($img_dir.'/'.$dir, 0777, true);
-        if(file_exists($img_dir.'/'.$dir.$id.'t.jpg')) continue;
-        $img = @file_get_contents($thumb_url);
+        if(file_exists($img_dir.'/'.$dir.$id.'t.jpg') &&
+           file_exists($img_dir.'/'.$dir.$id.'p1.jpg') &&
+           !$data[1]) continue;
+        $img = @file_get_contents($data[0]);
         if($img) {
             echo $img_dir.'/'.$dir.$id."t.jpg\n";
             file_put_contents($img_dir.'/'.$dir.$id.'t.jpg', $img);
             for($k=1;$k<=5;$k++) {
-                $name = str_replace('_thumbs', '', $thumb_url);
+                $name = str_replace('_thumbs', '', $data[0]);
                 $name = str_replace('t1.jpg', "p$k.jpg", $name);
                 $img = @file_get_contents($name);
                 if($img) {
