@@ -270,7 +270,7 @@ class IndexController extends Zend_Controller_Action
                 ->setCookieJar()
                 ->setParameterPost(array(
                     'go'    => 'now',
-                    'email' => $this->config->site->email,
+                    'email' => $this->config->site->usuario,
                     'senha' => $this->config->site->senha
                 ))
                 ->setMethod(Zend_Http_Client::POST);
