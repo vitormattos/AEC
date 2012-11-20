@@ -1,7 +1,7 @@
 AEC
 ===
 
-Robô para monitoramento do site AmorEmCristo
+Robô para monitoramento do site AmorEmCristo.com
 
 Projeto criado com **ZendFramework**
 
