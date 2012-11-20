@@ -33,6 +33,11 @@ try {
     exit;
 }
 
+if(!is_numeric($opts->id)) {
+    echo $options->getUsageMessage();
+    exit;
+}
+
 $robot = new Robot_Aec();
 $user = $robot->getUser($opts->id);
 if($user) {
