@@ -1,5 +1,7 @@
 nbproject
 *.sqlite
+*.swp
 scripts/log*
 *~
 library/Zend
+application/configs/senhas.ini
