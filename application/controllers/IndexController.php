@@ -278,7 +278,7 @@ class IndexController extends Zend_Controller_Action
         $result = $this->db->fetchAll("
             SELECT usuario.id, apelido, url_perfil, `status`, estado_civil, idade,
                    url_thumb, altura, peso, denominacao.denominacao, profissao,
-                   formacao, quer_ter_filhos, updated, ultimo_acesso
+                   formacao, quer_ter_filhos, updated, created, ultimo_acesso
               FROM usuario
               LEFT JOIN denominacao ON denominacao.id = usuario.denominacao_id
               LEFT JOIN (SELECT max(ultimo_acesso) AS ultimo_acesso,

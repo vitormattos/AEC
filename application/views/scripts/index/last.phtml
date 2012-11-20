@@ -57,8 +57,12 @@ foreach($this->users as $user) {
             <tr>
                 <td>Status</td>
                 <td>
-                    <img src="/img/icon_<?php echo strtolower($user['status']); ?>.gif">
-                    <?php echo $user['status'];?>
+                    <img src="/img/icon_<?php echo strtolower($user['status']); ?>.gif"><?php
+                    echo $user['status'];
+                    if($user['created'] > $user['ultimo_acesso']) {
+                        ?><img src="/img/new.gif"><?php
+                    }
+                    ?>
                 </td>
             </tr>
         </table>
