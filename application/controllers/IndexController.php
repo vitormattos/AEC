@@ -305,6 +305,7 @@ class IndexController extends Zend_Controller_Action
              AND estado_civil IN ('Solteiro(a)', 'Viúvo(a)')
              AND cidade = 'Rio De Janeiro'
              AND idade <= 35
+             AND idade >= 23
              ORDER BY status DESC, ultimo_acesso DESC, updated DESC
              LIMIT 15");
         foreach($result as $key => $field) {
