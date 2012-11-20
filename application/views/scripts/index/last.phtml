@@ -59,7 +59,10 @@ foreach($this->users as $user) {
                 <td>
                     <img src="/img/icon_<?php echo strtolower($user['status']); ?>.gif"><?php
                     echo $user['status'];
-                    if($user['created'] > $user['ultimo_acesso']) {
+                    $date1 = new DateTime();
+                    $date2 = new DateTime($user['created']);
+                    $interval = $date1->diff($date2);
+                    if($interval->format('%a') == 0) {
                         ?><img src="/img/new.gif"><?php
                     }
                     ?>
