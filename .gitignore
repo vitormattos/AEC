@@ -2,3 +2,4 @@ nbproject
 *.sqlite
 scripts/log*
 *~
+library/Zend
