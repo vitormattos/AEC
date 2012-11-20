@@ -13,7 +13,7 @@ do {
         for($k = $strlen-4; $k >= 0 ; $k--) {
             $dir = substr($id, $k-$strlen, 1).'/'.$dir;
         }
-        $img_dir = realpath(dirname(__FILE__).'/../public/img/');
+        $img_dir = realpath(dirname(__FILE__).'/../public/img/fotos/');
         if(!is_dir($img_dir.'/'.$dir)) mkdir($img_dir.'/'.$dir, 0777, true);
         if(file_exists($img_dir.'/'.$dir.$id.'t.jpg') &&
            file_exists($img_dir.'/'.$dir.$id.'p1.jpg') &&

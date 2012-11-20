@@ -30,10 +30,15 @@ class IndexController extends Zend_Controller_Action
 
     public function init()
     {
+        $this->config = new Zend_Config_Ini(
+            APPLICATION_PATH.'/configs/'.
+            $this->getInvokeArg('bootstrap')->getOption('senhas')
+        );
         $this->db = new Zend_Db_Adapter_Pdo_Mysql(array(
-            'dbname' => 'aec',
-            'username' => 'root',
-            'password' => 'root'
+            'host' => $this->config->database->host,
+            'dbname' => $this->config->database->dbname,
+            'username' => $this->config->database->username,
+            'password' => $this->config->database->password
         ));
         $this->createTable();
         /*$this->db = new Zend_Db_Adapter_Pdo_Sqlite(array(
@@ -94,16 +99,8 @@ class IndexController extends Zend_Controller_Action
                     // id
                     preg_match('{id=([0-9]{1,})}', $url, $id);
                     $id = $id[1];
-                    // Apenas pega dados do usuário se ele não existir
-                    $existe = $this->getById($id);
-                    if(!$existe['url_thumb']) {
-                        // joga para background
-                        $process = realpath(APPLICATION_PATH . '/../scripts/').
-                                '/load_url.php --id '.$id
-                                .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
-                        pclose(popen("php $process &", 'r'));
-                        $user[$id]['url_perfil'] = $url;
-                    }
+                    // url do perfil
+                    $user[$id]['url_perfil'] = $url;
                     // status
                     $user[$id]['status'] = $node
                             ->getElementsByTagName('div')->item(1)
@@ -120,6 +117,15 @@ class IndexController extends Zend_Controller_Action
                 $this->aec->save($user[$id], $id);
                 $j++;
             }
+            // Apenas pega dados do usuário se ele não existir
+            $existe = $this->getById($id);
+            if(!$existe['url_thumb']) {
+                // joga para background
+                $process = realpath(APPLICATION_PATH . '/../scripts/').
+                        '/load_url.php --id '.$id
+                        .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
+                pclose(popen("php $process &", 'r'));
+            }
         }
         foreach($user as $id => $u) {
             $dir = '';
@@ -127,9 +133,9 @@ class IndexController extends Zend_Controller_Action
             for($k = $strlen-4; $k >= 0 ; $k--) {
                 $dir = substr($id, $k-$strlen, 1).'/'.$dir;
             }
-            if(file_exists(realpath(APPLICATION_PATH . '/../public/').'/img/'.$dir.$id.'p1.jpg')) {
+            if(file_exists(realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir.$id.'p1.jpg')) {
                 echo 
-                '<img src="/img/'.$dir.$id.'p1.jpg"    >';
+                '<img src="/img/fotos/'.$dir.$id.'p1.jpg"    >';
             }
         }
         //Zend_Debug::dump($user);
@@ -258,8 +264,8 @@ class IndexController extends Zend_Controller_Action
                 ->setCookieJar()
                 ->setParameterPost(array(
                     'go'    => 'now',
-                    'email' => 'vitor.mattos@gmail.com',
-                    'senha' => '140784'
+                    'email' => $this->config->site->email,
+                    'senha' => $this->config->site->senha
                 ))
                 ->setMethod(Zend_Http_Client::POST);
         $response = $client->request();
@@ -302,7 +308,7 @@ class IndexController extends Zend_Controller_Action
                 $dir = substr($field['id'], $k-$strlen, 1).'/'.$dir;
             }            
             for($i=1;$i<=5;$i++) {
-                $img = realpath(APPLICATION_PATH . '/../public/').'/img/'.$dir.$field['id'].'p'.$i.'.jpg';
+                $img = realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir.$field['id'].'p'.$i.'.jpg';
                 if(file_exists($img)) {
                     $change_date = date("F d Y H:i:s.", filemtime($img));
                     $result[$key]['last_change_img'] = $change_date;
@@ -313,7 +319,7 @@ class IndexController extends Zend_Controller_Action
                         $result[$key]['img_updated'] = 'não';
                     }
                     $result[$key]['img_url'][] = array(
-                        'url' => '/img/'.$dir.$field['id'].'p'.$i.'.jpg',
+                        'url' => '/img/fotos/'.$dir.$field['id'].'p'.$i.'.jpg',
                         'alt' => $field['apelido']
                     );
                     $result[$key]['img_updated'] = 'sim';
@@ -358,7 +364,7 @@ class IndexController extends Zend_Controller_Action
             $dir = substr($result['id'], $k-$strlen, 1).'/'.$dir;
         }            
         for($i=1;$i<=5;$i++) {
-            $img = realpath(APPLICATION_PATH . '/../public/').'/img/'.$dir.$result['id'].'p'.$i.'.jpg';
+            $img = realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir.$result['id'].'p'.$i.'.jpg';
             if(file_exists($img)) {
                 
                 $change_date = date("F d Y H:i:s.", filemtime($img));
@@ -370,7 +376,7 @@ class IndexController extends Zend_Controller_Action
                     $result['img_updated'] = 'não';
                 }
                 $result['img_url'][] = array(
-                    'url' => '/img/'.$dir.$result['id'].'p'.$i.'.jpg',
+                    'url' => '/img/fotos/'.$dir.$result['id'].'p'.$i.'.jpg',
                     'alt' => $result['apelido']
                 );
             } elseif($i==1) {

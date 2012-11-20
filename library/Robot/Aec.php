@@ -18,10 +18,16 @@ class Robot_Aec {
     protected $db = null;
     
     public function __construct() {
+        $bootstrap = Zend_Controller_Front::getInstance()->getParam('bootstrap');
+        $this->config = new Zend_Config_Ini(
+            APPLICATION_PATH.'/configs/'.
+            $bootstrap->getOption('senhas')
+        );
         $this->db = new Zend_Db_Adapter_Pdo_Mysql(array(
-            'dbname' => 'aec',
-            'username' => 'root',
-            'password' => 'root'
+            'host' => $this->config->database->host,
+            'dbname' => $this->config->database->dbname,
+            'username' => $this->config->database->username,
+            'password' => $this->config->database->password
         ));
     }
 
@@ -98,7 +104,7 @@ class Robot_Aec {
             str_repeat('/0', (12-strlen($dir))/2).'/'.$dir.
             'usr'.$id.'t1.jpg';
 
-        $dir = realpath(APPLICATION_PATH . '/../public/').'/img/'.$dir;
+        $dir = realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir;
         if(!file_exists($dir.$id.'t.jpg')) {
             $this->pushPilha($id, $user['url_thumb']);
         } else {
