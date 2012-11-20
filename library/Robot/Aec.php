@@ -24,10 +24,12 @@ class Robot_Aec {
     protected $config = array();
     
     public function __construct() {
-        $bootstrap = Zend_Controller_Front::getInstance()->getParam('bootstrap');
+        $config = new Zend_Config_Ini(
+            APPLICATION_PATH.'/configs/application.ini'
+        );
         $this->config = new Zend_Config_Ini(
             APPLICATION_PATH.'/configs/'.
-            $bootstrap->getOption('senhas')
+            $config->get('development')->get('senhas')
         );
         $this->db = new Zend_Db_Adapter_Pdo_Mysql(array(
             'host' => $this->config->database->host,
