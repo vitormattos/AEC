@@ -17,6 +17,13 @@ database.password = "senha_do_banco"
 site.usuario = "seu_email_do_site"
 site.senha = "sua_senha"
 </pre>
+
+- Crie o link simbólico para o Zend Framework 1.12:
+<pre>
+# Symlink:
+% cd library; ln -s path/to/ZendFramework/library/Zend .
+</pre>
+
 - Crie o banco de dados que a aplicação criará a tabela no primeiro acesso.
 
 - Inicie o processo para coleta de imagens com o seguinte comando:
