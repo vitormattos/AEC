@@ -306,18 +306,18 @@ class IndexController extends Zend_Controller_Action
                 $img = realpath(APPLICATION_PATH . '/../public/').'/img/'.$dir.$field['id'].'p'.$i.'.jpg';
                 if(file_exists($img)) {
                     $change_date = date("F d Y H:i:s.", filemtime($img));
-                    $result['last_change_img'] = $change_date;
+                    $result[$key]['last_change_img'] = $change_date;
                     if($change_date < $field['updated']) {
                         $this->aec->pushPilha($field['id'], $field['url_thumb'], true);
-                        $result['img_updated'] = 'sim';
+                        $result[$key]['img_updated'] = 'sim';
                     } else {
-                        $result['img_updated'] = 'não';
+                        $result[$key]['img_updated'] = 'não';
                     }
                     $result[$key]['img_url'][] = array(
                         'url' => '/img/'.$dir.$field['id'].'p'.$i.'.jpg',
                         'alt' => $field['apelido']
                     );
-                    $result['img_updated'] = 'sim';
+                    $result[$key]['img_updated'] = 'sim';
                 } elseif($i==1) {
                     $this->aec->pushPilha($field['id'], $field['url_thumb']);
                     $result['img_updated'] = 'sim';
