@@ -249,10 +249,14 @@ class Robot_Aec {
                 $insert['usuario'][$key]=$value;
             }
         }
-        $results = $this->db->fetchRow('SELECT id FROM usuario where id = '.$id);
+        $results = $this->db->fetchRow('SELECT id, status FROM usuario where id = '.$id);
         if($results) {
             unset($insert['usuario']['id']);
-            if(isset($insert['usuario']['status']) && $insert['usuario']['status'] == 'Online') {
+            if(
+                    isset($insert['usuario']['status']) &&
+                    $insert['usuario']['status'] == 'Online' &&
+                    $results['status'] != 'Online'
+                ) {
                 $insert['usuario']['updated'] = date('Y-m-d H:i:s');
             } else {
                 unset($insert['usuario']['updated']);
