@@ -37,6 +37,7 @@ Onde:
 
 *scripts/log3* é o arquivo de log que contém a data da última requisição
 </pre>
+
 **OBS1:** tem muito código em hadcode.
 
 **OBS2:** A busca feita são por perfis de:
@@ -62,7 +63,7 @@ e para alterar, modifique a action *index/search-online* com as informações ob
 **OBS4:** Na tela do perfil do usário, da aplicação, na parte inferior, tem um formulário para envio de mensagens.
 Este formulário apenas funciona para quem é usuário premium no site, sim, eu paguei para ser.
 
-**OBS5:** o script script/update_all.php serve para atualizar todos os perfis de usuários.
+**OBS5:** o script *script/update_all.php* serve para atualizar todos os perfis de usuários.
 **CUIDADO** ao rodar este script caso o seu banco já esteja grande, poderá demorar.
 
 **OBS6:** Talvez seja necessário dar permissão em algumas pastas do projeto
