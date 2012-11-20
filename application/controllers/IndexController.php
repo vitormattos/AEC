@@ -287,7 +287,7 @@ class IndexController extends Zend_Controller_Action
                          GROUP BY usuario_id
                         ) ultimo_acesso
                 ON ultimo_acesso.usuario_id = usuario.id
-             WHERE tem_filhos = 'Não possuo filhos'
+             WHERE tem_filhos = 'nao'
              /*AND quer_ter_filhos = 'não quero ter filhos'*/
              AND sexo = 'Feminino'
              AND estado_civil IN ('Solteiro(a)', 'Viúvo(a)')
@@ -302,7 +302,6 @@ class IndexController extends Zend_Controller_Action
                 $dir = substr($field['id'], $k-$strlen, 1).'/'.$dir;
             }            
             for($i=1;$i<=5;$i++) {
-                
                 $img = realpath(APPLICATION_PATH . '/../public/').'/img/'.$dir.$field['id'].'p'.$i.'.jpg';
                 if(file_exists($img)) {
                     $change_date = date("F d Y H:i:s.", filemtime($img));
@@ -344,7 +343,7 @@ class IndexController extends Zend_Controller_Action
                         ) ultimo_acesso
                 ON ultimo_acesso.usuario_id = usuario.id
              WHERE usuario.id = {$id}");
-        if(!$result) {
+        if(!$result || $this->getRequest()->getParam('update') == 1) {
             // joga para background
             $process = realpath(APPLICATION_PATH . '/../scripts/').
                     '/load_url.php --id '.$id

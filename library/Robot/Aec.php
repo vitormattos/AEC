@@ -101,6 +101,11 @@ class Robot_Aec {
         $dir = realpath(APPLICATION_PATH . '/../public/').'/img/'.$dir;
         if(!file_exists($dir.$id.'t.jpg')) {
             $this->pushPilha($id, $user['url_thumb']);
+        } else {
+            $change_date = date("F d Y H:i:s.", filemtime($dir.$id.'t.jpg'));
+            if($change_date < $user['updated']) {
+                $this->aec->pushPilha($user['id'], $user['url_thumb'], true);
+            }
         }
 
         $body = $response->getBody();
@@ -168,7 +173,7 @@ class Robot_Aec {
                 continue;
             } elseif(strpos($result->C14N(), 'colspan')) {
                 $value = explode(',', $result->nodeValue);
-                $user['tem_filhos'] = $value[0];
+                $user['tem_filhos'] = $value[0] == 'Possuo filhos' ? 'sim' : 'nao';
                 $user['quer_ter_filhos'] = trim($value[1]);
                 $value[2] = explode(' e ', $value[2]);
                 $user['fuma'] = trim($value[2][0]);
@@ -192,12 +197,14 @@ class Robot_Aec {
                     $insert['usuario'][$chave]=$valor;
                 }
             } elseif($key == 'ultimo_acesso') {
-                $child = $this->db->fetchRow("SELECT id FROM $key where $key = '$value' AND usuario_id = $id");
-                if(!$child) {
-                    $this->db->insert($key, array(
-                        $key => $value,
-                        'usuario_id' => $id
-                    ));
+                if(isset($usuario['status']) && $usuario['status'] == 'Online') {
+                    $child = $this->db->fetchRow("SELECT id FROM $key where $key = '$value' AND usuario_id = $id");
+                    if(!$child) {
+                        $this->db->insert($key, array(
+                            $key => $value,
+                            'usuario_id' => $id
+                        ));
+                    }
                 }
                 unset($usuario['ultimo_acesso']);
             } elseif($key == 'denominacao') {
@@ -231,7 +238,7 @@ class Robot_Aec {
         $results = $this->db->fetchRow('SELECT id FROM usuario where id = '.$id);
         if($results) {
             unset($insert['usuario']['id']);
-            if($insert['usuario']['status'] == 'Online') {
+            if(isset($insert['usuario']['status']) && $insert['usuario']['status'] == 'Online') {
                 $insert['usuario']['updated'] = date('Y-m-d H:i:s');
             } else {
                 unset($insert['usuario']['updated']);
