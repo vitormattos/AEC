@@ -385,6 +385,12 @@ class IndexController extends Zend_Controller_Action
                     'url' => '/img/fotos/'.$dir.$result['id'].'p'.$i.'.jpg',
                     'alt' => $result['apelido']
                 );
+            } elseif(!$result['url_thumb']) {
+                // joga para background
+                $process = realpath(APPLICATION_PATH . '/../scripts/').
+                        '/load_url.php --id '.$result['id']
+                        .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
+                pclose(popen("php $process &", 'r'));
             } elseif($i==1) {
                 $this->aec->pushPilha($result['id'], $result['url_thumb']);
             } else break;
