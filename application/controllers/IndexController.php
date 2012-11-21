@@ -128,7 +128,7 @@ class IndexController extends Zend_Controller_Action
             }
             // Apenas pega dados do usuário se ele não existir
             $existe = $this->getById($id);
-            if(!$existe['url_thumb']) {
+            if(!$existe['apelido']) {
                 // joga para background
                 $process = realpath(APPLICATION_PATH . '/../scripts/').
                         '/load_url.php --id '.$id
