@@ -342,7 +342,7 @@ class IndexController extends Zend_Controller_Action
                     );
                     $result[$key]['img_updated'] = 'sim';
                 } elseif($i==1) {
-                    $this->aec->pushPilha($field['id']);
+                    $this->aec->pushPilha($field['id'], true);
                     $result[$key]['img_updated'] = 'sim';
                 } else break;
             }
@@ -355,6 +355,7 @@ class IndexController extends Zend_Controller_Action
         $id = $this->getRequest()->getParam('id');
         if(!$id) {
             $this->view->erro = 'Perfil inválido';
+            return;
         }
         $result = $this->db->fetchRow("
             SELECT usuario.*, denominacao.denominacao, ultimo_acesso
@@ -373,7 +374,7 @@ class IndexController extends Zend_Controller_Action
                     '/load_url.php --id '.$id
                     .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
             pclose(popen("php $process &", 'r'));
-            $this->aec->pushPilha($user['id'], true);
+            $this->aec->pushPilha($id, true);
             if($this->getRequest()->getParam('update') == 1) {
                 $this->redirect('/index/perfil/?id='.$id);
                 return;
@@ -400,12 +401,6 @@ class IndexController extends Zend_Controller_Action
                     'url' => '/img/fotos/'.$dir.$result['id'].'p'.$i.'.jpg',
                     'alt' => $result['apelido']
                 );
-            } elseif(!$result['url_thumb']) {
-                // joga para background
-                $process = realpath(APPLICATION_PATH . '/../scripts/').
-                        '/load_url.php --id '.$result['id']
-                        .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
-                pclose(popen("php $process &", 'r'));
             } elseif($i==1) {
                 $this->aec->pushPilha($result['id']);
             } else break;
