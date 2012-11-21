@@ -38,6 +38,12 @@ if(!is_numeric($opts->id)) {
     exit;
 }
 
+$shm = shm_attach(12345, 524288);
+$ignore = @shm_get_var($shm, 2);
+if(in_array($opts->id, $ignore)) {
+    exit;
+}
+
 $robot = new Robot_Aec();
 $user = $robot->getUser($opts->id);
 if($user) {
