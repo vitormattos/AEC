@@ -110,7 +110,7 @@ class Robot_Aec {
 
         $dir = realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir;
         if(!file_exists($dir.$id.'t.jpg')) {
-            $this->pushPilha($id);
+            $this->pushPilha($id, true);
         } else {
             $user['url_thumb'] = 'http://images.amoremcristo.com/images/usuarios_thumbs'.
                 str_repeat('/0', (12-strlen($dir))/2).'/'.$dir.
