@@ -63,14 +63,26 @@ e para alterar, modifique a action *index/search-online* com as informações ob
     idade: menor ou igual a 35
     tem_filhos: nao
 </pre>
-- É bom que alguém implemente um formulário de filtro para remover estas informações de hardcode da query.
+- É bom que alguém implemente um formulário de filtro para remover estas 
+informações de hardcode da query.
 - Na listagem, o link na imagem joga para o perfil do usuário no site.
 - O link no apelido joga para o perfil do usuário coletado pela aplicação
 
-**OBS4:** Na tela do perfil do usário, da aplicação, na parte inferior, tem um formulário para envio de mensagens.
-Este formulário apenas funciona para quem é usuário premium no site, sim, eu paguei para ser.
+**OBS4:** Na tela do perfil do usário, da aplicação, na parte inferior, tem um 
+formulário para envio de mensagens.
+Este formulário apenas funciona para quem é usuário premium no site, sim, eu
+paguei para ser.
 
-**OBS5:** o script *script/update_all.php* serve para atualizar todos os perfis de usuários.
+**OBS5:** o script *script/update_all.php* serve para atualizar todos os perfis
+de usuários.
 **CUIDADO** ao rodar este script caso o seu banco já esteja grande, poderá demorar.
 
 **OBS6:** Talvez seja necessário dar permissão em algumas pastas do projeto
+
+**OBS7:** A action para verificar as mensagens enviadas é *index/inbox* e
+mensagens recebidas é *index/inbox/?caixa=entrada*. Estas actions necessitam de
+refactor para que, cada página da caixa de entrada seja lida em um processo
+independente assim, evitando sobrecarga e possibilitando também implementação
+de processo para verificação de mensagens. A verificação da caixa de entrada lê
+todas as páginas, necessário fazer refactor para evitar este comportamento e
+possibilitar que apenas a primeira paǵina seja lida
