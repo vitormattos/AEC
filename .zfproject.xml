@@ -13,6 +13,7 @@
           <actionMethod actionName="last"/>
           <actionMethod actionName="perfil"/>
           <actionMethod actionName="sendMessage"/>
+          <actionMethod actionName="inbox"/>
         </controllerFile>
         <controllerFile controllerName="Error"/>
       </controllersDirectory>
@@ -44,6 +45,9 @@
           </viewControllerScriptsDirectory>
           <viewControllerScriptsDirectory forControllerName="Index">
             <viewScriptFile forActionName="sendMessage"/>
+          </viewControllerScriptsDirectory>
+          <viewControllerScriptsDirectory forControllerName="Index">
+            <viewScriptFile forActionName="inbox"/>
           </viewControllerScriptsDirectory>
         </viewScriptsDirectory>
         <viewHelpersDirectory/>

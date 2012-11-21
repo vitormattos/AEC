@@ -33,6 +33,12 @@ class IndexController extends Zend_Controller_Action
      * @var Zend_Config
      */
     protected $config = array();
+    
+    /**
+     * Próxima página para a paginação
+     * @var int
+     */
+    protected $nextPage = 1;
 
     public function init()
     {
@@ -65,6 +71,7 @@ class IndexController extends Zend_Controller_Action
     {
         //$this->loginAction();
         $client = new Zend_Http_Client();
+        a:
         $client->setUri('http://www.amoremcristo.com/search.asp')
                 ->setParameterGet(array(
                     'go'      => 'now',
@@ -81,18 +88,20 @@ class IndexController extends Zend_Controller_Action
         //$client->setUri('http://www.amoremcristo.com/search.asp?go=now&tb=9&gender=0&fromage=0&toage=35&pais=28&estado=19&cidade=6935&pics=1&local=1')
                 ->setCookieJar($this->sessionNamespace->cookieJar);
         $response = $client->request();
-        // verifica a existência do cookie de autenticação
-        // se não existir, faz login e refaz a requisição
-        if(!$client->getCookieJar() && !$recursive) {
-            $this->loginAction();
-            $this->searchOnlineAction(1);
-        }
 
         if(!$response->isSuccessful()) return;
 
-        $body = $response->getBody();
-        $body = str_replace('&nbsp;', ' ', $body);
+        $body = str_replace('&nbsp;', ' ', $response->getBody());
         $dom = new Zend_Dom_Query($body);
+        // verifica se está autenticado
+        // senão, faz login e refaz a requisição
+        if($dom->query('.header_login a')->count() < 2 && !$recursive) {
+            $this->loginAction();
+            $client->resetParameters();
+            $recursive = true;
+            goto a;
+        }
+
         $results = $dom->query('.search_results .details_table td');
         $user = array();
         $users_online = array();
@@ -101,7 +110,7 @@ class IndexController extends Zend_Controller_Action
             foreach($result->childNodes as $node) {
                 if($node->nodeType != 1) continue;
                 if($j == 0) {
-                    $url = $node->firstChild->firstChild->getAttribute('href');                    
+                    $url = $node->firstChild->firstChild->getAttribute('href');
                     // id
                     preg_match('{id=([0-9]{1,})}', $url, $id);
                     $id = $id[1];
@@ -213,6 +222,16 @@ class IndexController extends Zend_Controller_Action
                 usuario_id INTEGER,
                 PRIMARY KEY(frequencia_igreja_desejada_id, usuario_id)
             );
+        ";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS `mensagem` (
+              `id` int(11) NOT NULL,
+              `remetente_id` int(11) NOT NULL,
+              `usuario_id` int(11) NOT NULL,
+              `data_envio` varchar(40) NOT NULL,
+              `status` smallint(6) NOT NULL,
+              `mensagem` text
+            )
         ";
         foreach($create_sub as $create) {
             $this->db->query($create);
@@ -406,6 +425,15 @@ class IndexController extends Zend_Controller_Action
             } else break;
         }
         $this->view->user = $result;
+        
+        $mensagens = $this->db->fetchAll("
+            SELECT *
+              FROM mensagem
+             WHERE usuario_id = $id
+                OR remetente_id = $id
+             ORDER BY data_envio
+        ");
+        $this->view->mensagens = $mensagens;
     }
 
     public function sendMessageAction()
@@ -446,6 +474,153 @@ class IndexController extends Zend_Controller_Action
         }
     }
 
+    public function inboxAction()
+    {
+        $caixa = $this->getRequest()->getParam('caixa');
+        $client = new Zend_Http_Client();
+        a:
+        $client->setUri('http://www.amoremcristo.com/loginadm_emails.asp')
+                ->setParameterGet(array(
+                    's' => $caixa == 'entrada' ? 'r' : 's',
+                    'p' => $this->nextPage
+                ))
+                ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_emails.asp')
+                ->setCookieJar($this->sessionNamespace->cookieJar);
+        $response = $client->request();
 
+        if(!$response->isSuccessful()) return;
+
+        $body = str_replace('&nbsp;', ' ', $response->getBody());
+        $dom = new Zend_Dom_Query($body);
+        // verifica se está autenticado
+        // senão, faz login e refaz a requisição
+        if($dom->query('.header_login a')->count() < 2 && !$recursive) {
+            $this->loginAction();
+            $client->resetParameters();
+            $recursive = true;
+            goto a;
+        }
+
+        $td = new Zend_Dom_Query();
+        $results = $dom->query('.details_table tr.even, .details_table tr.odd');
+        foreach($results as $result) {
+            $td->setDocument($result->C14N());
+            $campos = $td->query('td');
+            foreach($campos as $campo) {
+                if($campo->getLineNo() == 1) continue;
+                switch($campo->getLineNo()) {
+                    case 2:
+                        $url = $campo->firstChild->firstChild->getAttribute('href');
+                        // usuario_id
+                        preg_match('{id=([0-9]{1,})}', $url, $usuario_id);
+                        // usuário inativo
+                        if(!isset($usuario_id[1])) {
+                            continue 3;
+                        }
+                        $usuario_id = $usuario_id[1];
+                        break;
+                    case 3:
+                        $url = $campo->firstChild->firstChild->getAttribute('href');
+                        // mensagem_id
+                        preg_match('{id=([0-9]{1,}).*is=([0-9]{1,})}', $url, $ids);
+                        $mensagem_id = $ids[1];
+                        $remetente_id = $ids[2];
+                        $read = $campo->firstChild->firstChild->getAttribute('style');
+                        $read = strpos($read, 'color:#bdbcbc;')?1:0;
+                        break;
+                    case 4:
+                        $data = $campo->nodeValue;
+                        break;
+                }
+            }
+            $this->mensagens[$mensagem_id] = array(
+                'id' => $mensagem_id,
+                'remetente_id' => $remetente_id,
+                'usuario_id' => $usuario_id,
+                'data_envio' => $data,
+                'status' => $read
+            );
+        }
+
+        $this->paginate($dom, 'inboxAction');
+        $this->saveMessages($this->mensagens);
+    }
+    
+    /**
+     * Função recursiva para paginação
+     * 
+     * @param Zend_Dom_Query $dom
+     * @param strinig $method_name
+     */
+    private function paginate($dom, $method_name)
+    {
+        $results = $dom->query('.paging ul>li');
+        $achou = false;
+        foreach($results as $result) {
+            if($result->getAttribute('class') == 'paging_current') {
+                $achou = true;
+            } elseif($achou){
+                if($result->getAttribute('class') == 'paging_link')
+                if(is_numeric($result->nodeValue))
+                if($result->nodeValue > $this->nextPage) {
+                    $this->nextPage = $result->nodeValue;
+                    call_user_method($method_name, $this);
+                }
+                break;
+            }
+        }
+    }
+    
+    private function saveMessages($mensagens)
+    {
+        if(count($mensagens)) {
+            $results = $this->db->fetchAll(
+                "SELECT id, status FROM mensagem WHERE id IN (" .
+                    implode(', ', array_keys($mensagens)) .
+                ")"
+            );
+        }
+        if($results)
+        foreach($results as $result) {
+            if(!$result['status'] && $mensagens[$result['id']]['status']) {
+                $this->db->update(
+                    'mensagem',
+                    array('status' => $result['status']),
+                    "id = {$result['id']}"
+                );
+            }
+            unset($mensagens[$result['id']]);
+        }
+        foreach($mensagens as $mensagem) {
+            $this->db->insert('mensagem', $mensagem);
+            $this->getMessage($mensagem['id'], $mensagem['remetente_id']);
+        }
+    }
+
+    private function getMessage($mensagem_id, $remetente_id)
+    {
+        $client = new Zend_Http_Client();
+        $client->setUri('http://www.amoremcristo.com/msgread.asp')
+                ->setParameterGet(array(
+                    'id' => $mensagem_id,
+                    'ns' => 7,
+                    'is' => $remetente_id
+                ))
+                ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_emails.asp')
+                ->setCookieJar($this->sessionNamespace->cookieJar);
+        $response = $client->request();
+
+        $body = str_replace('&nbsp;', ' ', $response->getBody());
+
+        $dom = new Zend_Dom_Query($body);
+        $results = $dom->query('.message_text');
+        if($results->count()){
+            $this->db->update(
+                'mensagem',
+                array('mensagem' => iconv("UTF-8", "ISO-8859-1", $results->current()->nodeValue)),
+                "id = $mensagem_id"
+            );
+        }
+    }
 }
 

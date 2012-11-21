@@ -66,7 +66,30 @@ foreach($this->user as $key => $value) {
     if(in_array($key, array('denominacao_id'))) continue;
     ?><tr><td><?php echo $key;?></td><td><?php echo $value;?></td></tr><?php
 }?>
-</table>
+</table><?php
+if($this->mensagens) {
+    ?>
+    <table border="1">
+        <tr>
+            <td>Data envio:</td>
+            <td>Status:</td>
+            <td>Mensagem:</td>
+        </tr><?php
+        foreach($this->mensagens as $mensagem) {
+            ?>
+            <tr>
+                <td><?php echo $mensagem['data_envio'];?></td>
+                <td>
+                    <img src="/img/Gnome-mail-<?php
+                        echo $mensagem['status'] ? 'read' : 'unread';
+                    ?>.svg" />
+                </td>
+                <td><?php echo nl2br(iconv("ISO-8859-1", "UTF-8", str_replace("\n", "\n\n", $mensagem['mensagem'])) );?></td>
+            </tr><?php
+        }
+    ?></table><?php
+}
+?>
 <form action="/index/send-message" method="POST">
     <input type="hidden" name="id" value="<?php echo $this->user['id'];?>">
     <textarea name="mensagem" rows="15" cols="80"></textarea>
