@@ -61,12 +61,13 @@ class Robot_Aec {
         return $var;
     }
     
-    public function pushPilha($id, $url_thumb, $force_update = false) {
-        $shm = shm_attach(12356, 524288);
+    public function pushPilha($id, $force_update = false) {
+        if(!is_numeric($id)) return;
+        $shm = shm_attach(12345, 524288);
         $pilha = @shm_get_var($shm, 1);
         $ignore = @shm_get_var($shm, 2);
         // limpeza da pilha
-        if($pilha && is_array($pilha)) {
+        if(is_array($pilha)) {
             reset($pilha);
             while(count($pilha)>=100) {
                 unset($pilha[key($pilha)]);
@@ -75,12 +76,10 @@ class Robot_Aec {
         } else {
             shm_remove($shm);
             shm_detach($shm);
-            $shm = shm_attach(12356, 524288);
+            $shm = shm_attach(12345, 524288);
         }
-        $pilha[$id] = array(
-            $url_thumb,
-            $force_update
-        );
+        $pilha[$id] = $force_update;
+        if($force_update) unset($ignore[$id]);
         shm_put_var($shm, 1, $pilha);
         shm_put_var($shm, 2, $ignore);
     }
@@ -108,17 +107,17 @@ class Robot_Aec {
         for($k = $strlen-5; $k >= 0 ; $k--) {
             $dir = substr($id, $k-$strlen, 1).'/'.$dir;
         }
-        $user['url_thumb'] = 'http://images.amoremcristo.com/images/usuarios_thumbs'.
-            str_repeat('/0', (12-strlen($dir))/2).'/'.$dir.
-            'usr'.$id.'t1.jpg';
 
         $dir = realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir;
         if(!file_exists($dir.$id.'t.jpg')) {
-            $this->pushPilha($id, $user['url_thumb']);
+            $this->pushPilha($id);
         } else {
+            $user['url_thumb'] = 'http://images.amoremcristo.com/images/usuarios_thumbs'.
+                str_repeat('/0', (12-strlen($dir))/2).'/'.$dir.
+                'usr'.$id.'t1.jpg';
             $change_date = date("F d Y H:i:s.", filemtime($dir.$id.'t.jpg'));
             if($change_date < $user['updated']) {
-                $this->aec->pushPilha($user['id'], $user['url_thumb'], true);
+                $this->aec->pushPilha($user['id'], true);
             }
         }
 

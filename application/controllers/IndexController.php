@@ -75,7 +75,7 @@ class IndexController extends Zend_Controller_Action
                     'pais'    => 28,
                     'estado'  => 19,
                     'cidade'  => 6935,
-                    'pics'    => 1,
+                    //'pics'    => 1,
                     'local'   => 1
                 ))
         //$client->setUri('http://www.amoremcristo.com/search.asp?go=now&tb=9&gender=0&fromage=0&toage=35&pais=28&estado=19&cidade=6935&pics=1&local=1')
@@ -94,8 +94,8 @@ class IndexController extends Zend_Controller_Action
         $body = str_replace('&nbsp;', ' ', $body);
         $dom = new Zend_Dom_Query($body);
         $results = $dom->query('.search_results .details_table td');
-        $this->db->update('usuario', array('status' => 'Offline'));
         $user = array();
+        $users_online = array();
         foreach($results as $result) {
             $j = 0;
             foreach($result->childNodes as $node) {
@@ -112,6 +112,9 @@ class IndexController extends Zend_Controller_Action
                             ->getElementsByTagName('div')->item(1)
                             ->getElementsByTagName('font')->item(0)
                             ->textContent;
+                    if($user[$id]['status'] == 'Online') {
+                        $users_online[] = $id;
+                    }
                 } elseif ($j == 2) {
                     // ultimo acesso
                     $user[$id]['ultimo_acesso'] = $node->getElementsByTagName('div')->item(1)->textContent;
@@ -132,6 +135,13 @@ class IndexController extends Zend_Controller_Action
                         .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
                 pclose(popen("php $process &", 'r'));
             }
+        }
+        if(count($users_online)) {
+            $this->db->update(
+                'usuario',
+                array('status' => 'Offline'),
+                'id NOT IN ('.implode(', ', $users_online).')'
+            );
         }
         foreach($user as $id => $u) {
             $dir = '';
@@ -306,8 +316,9 @@ class IndexController extends Zend_Controller_Action
              AND cidade = 'Rio De Janeiro'
              AND idade <= 35
              AND idade >= 23
-             ORDER BY status DESC, ultimo_acesso DESC, updated DESC
-             LIMIT 15");
+             AND url_thumb IS NOT NULL
+             ORDER BY status DESC, updated DESC
+             LIMIT 30");
         foreach($result as $key => $field) {
             $dir = '';
             $strlen = strlen($field['id']);
@@ -320,7 +331,7 @@ class IndexController extends Zend_Controller_Action
                     $change_date = date("F d Y H:i:s.", filemtime($img));
                     $result[$key]['last_change_img'] = $change_date;
                     if($change_date < $field['updated']) {
-                        $this->aec->pushPilha($field['id'], $field['url_thumb'], true);
+                        $this->aec->pushPilha($field['id'], true);
                         $result[$key]['img_updated'] = 'sim';
                     } else {
                         $result[$key]['img_updated'] = 'não';
@@ -331,8 +342,8 @@ class IndexController extends Zend_Controller_Action
                     );
                     $result[$key]['img_updated'] = 'sim';
                 } elseif($i==1) {
-                    $this->aec->pushPilha($field['id'], $field['url_thumb']);
-                    $result['img_updated'] = 'sim';
+                    $this->aec->pushPilha($field['id']);
+                    $result[$key]['img_updated'] = 'sim';
                 } else break;
             }
         }
@@ -362,8 +373,11 @@ class IndexController extends Zend_Controller_Action
                     '/load_url.php --id '.$id
                     .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
             pclose(popen("php $process &", 'r'));
-            $this->redirect('/index/perfil/?id='.$id);
-            return;
+            $this->aec->pushPilha($user['id'], true);
+            if($this->getRequest()->getParam('update') == 1) {
+                $this->redirect('/index/perfil/?id='.$id);
+                return;
+            }
         }
         $dir = '';
         $strlen = strlen($result['id']);
@@ -377,7 +391,7 @@ class IndexController extends Zend_Controller_Action
                 $change_date = date("F d Y H:i:s.", filemtime($img));
                 $result['last_change_img'] = $change_date;
                 if($change_date < $result['updated']) {
-                    $this->aec->pushPilha($result['id'], $result['url_thumb'], true);
+                    $this->aec->pushPilha($result['id'], true);
                     $result['img_updated'] = 'sim';
                 } else {
                     $result['img_updated'] = 'não';
@@ -393,7 +407,7 @@ class IndexController extends Zend_Controller_Action
                         .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
                 pclose(popen("php $process &", 'r'));
             } elseif($i==1) {
-                $this->aec->pushPilha($result['id'], $result['url_thumb']);
+                $this->aec->pushPilha($result['id']);
             } else break;
         }
         $this->view->user = $result;
@@ -410,7 +424,7 @@ class IndexController extends Zend_Controller_Action
                 ->setParameterPost(array(
                     'go'      => 'now',
                     'subj'    => iconv("UTF-8", "ISO-8859-1", 'Olá!'),
-                    'message' => $mensagem
+                    'message' => iconv("UTF-8", "ISO-8859-1", $mensagem)
                  ))
                 ->setParameterGet(array(
                     'id'      => $id
