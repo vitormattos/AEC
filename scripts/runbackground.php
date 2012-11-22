@@ -25,7 +25,9 @@ $application->bootstrap();
 
 try {
     $opts = new Zend_Console_Getopt(array(
-        'id|i=i'    => 'Id do usuário',
+        'class|c=w'  => 'Nome da classe',
+        'method|w=w' => 'Método a ser executado',
+        'args|a=s'   => 'array serializado e em base64 dos argumentos da classe'
     ));
     $options = $opts->parse();
 } catch (Zend_Console_Getopt_Exception $e) {
@@ -33,14 +35,32 @@ try {
     exit;
 }
 
-if(!is_numeric($opts->id)) {
-    echo $options->getUsageMessage();
+if(!class_exists($opts->class)) {
+    echo "Classe inválida\n";
+    echo $e->getUsageMessage();
     exit;
 }
 
-$robot = new Robot_Aec();
-$user = $robot->getUser($opts->id);
-if($user) {
-    echo $opts->id."\n";
-    $robot->save($user, $opts->id);
+$object = new $opts->class();
+if(!is_object($object)) {
+    echo "Falha ao instanciar objeto\n";
+    echo $e->getUsageMessage();
+    exit;
 }
+
+if(!method_exists($object, $opts->method)) {
+    echo "Método inexistente";
+    echo $e->getUsageMessage();
+    exit;
+}
+
+$args = base64_decode($opts->args);
+$args = unserialize($args);
+if(!is_array($args)) {
+    echo "Array de argumentos inválido\n";
+    echo $e->getUsageMessage();
+    exit;
+}
+
+$return = call_user_func_array(array($object, $opts->method), $args);
+Zend_Debug::dump($return);

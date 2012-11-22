@@ -18,6 +18,12 @@ class Robot_Aec {
     protected $db = null;
     
     /**
+     *
+     * @var shm_resource
+     */
+    protected $shm;
+
+    /**
      * configurações extras do sistema
      * @var Zend_Config
      */
@@ -37,6 +43,8 @@ class Robot_Aec {
             'username' => $this->config->database->username,
             'password' => $this->config->database->password
         ));
+        
+        $this->shm = shm_attach(12345, 524288);
     }
 
     protected function slug($var)
@@ -63,9 +71,8 @@ class Robot_Aec {
     
     public function pushPilha($id, $force_update = false) {
         if(!is_numeric($id)) return;
-        $shm = shm_attach(12345, 524288);
-        $pilha = @shm_get_var($shm, 1);
-        $ignore = @shm_get_var($shm, 2);
+        $pilha = @shm_get_var($this->shm, 1);
+        $ignore = @shm_get_var($this->shm, 2);
         // limpeza da pilha
         if(is_array($pilha)) {
             reset($pilha);
@@ -74,14 +81,14 @@ class Robot_Aec {
                 unset($ignore[key($pilha)]);
             }
         } else {
-            shm_remove($shm);
-            shm_detach($shm);
-            $shm = shm_attach(12345, 524288);
+            shm_remove($this->shm);
+            shm_detach($this->shm);
+            $this->shm = shm_attach(12345, 524288);
         }
         $pilha[$id] = $force_update;
         if($force_update) unset($ignore[$id]);
-        shm_put_var($shm, 1, $pilha);
-        shm_put_var($shm, 2, $ignore);
+        shm_put_var($this->shm, 1, $pilha);
+        shm_put_var($this->shm, 2, $ignore);
     }
 
     public function getUser($id)
@@ -266,5 +273,178 @@ class Robot_Aec {
             $insert['usuario']['updated'] = date('Y-m-d H:i:s');
             $this->db->insert('usuario', $insert['usuario']);
         }
+    }
+    
+    public function getAndSave($id)
+    {
+        $user = $this->getUser($id);
+        if($user) {
+            $this->save($user, $id);
+            return $id;
+        }
+    }
+    /**
+     * Executa um método de uma classe em background
+     * 
+     * @param string $class_name
+     * @param string $method
+     * @param Array $args
+     */
+    public function runBackground($class_name, $method, $args = array())
+    {
+        if(!class_exists($class_name)) return false;
+            $args = serialize(is_array($args) ? $args : array());
+            $args = base64_encode($args);
+
+            // joga para background
+            $process = realpath(APPLICATION_PATH . '/../scripts/').
+                    '/runbackground.php' .
+                    ' --class ' . $class_name .
+                    ' --method ' . $method .
+                    ' --args ' . $args
+                    .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
+            pclose(popen("php $process &", 'r'));
+    }
+    
+    public function searchOnline()
+    {
+        $client = new Zend_Http_Client();
+        a:
+        $client->setUri('http://www.amoremcristo.com/search.asp')
+                ->setParameterGet(array(
+                    'go'      => 'now',
+                    'tb'      => 9,
+                    'gender'  => 0,
+                    'fromage' => 0,
+                    'toage'   => 35,
+                    'pais'    => 28,
+                    'estado'  => 19,
+                    'cidade'  => 6935,
+                    //'pics'    => 1,
+                    'local'   => 1
+                ))
+                ->setCookieJar($this->getCookie());
+        $response = $client->request();
+
+        if(!$response->isSuccessful()) return;
+
+        $body = str_replace('&nbsp;', ' ', $response->getBody());
+        $dom = new Zend_Dom_Query($body);
+        // verifica se está autenticado
+        // senão, faz login e refaz a requisição
+        if($dom->query('.header_login a')->count() < 2 && !$recursive) {
+            $this->login();
+            $client->resetParameters();
+            $recursive = true;
+            goto a;
+        }
+
+        $results = $dom->query('.search_results .details_table td');
+        $user = array();
+        $users_online = array();
+        foreach($results as $result) {
+            $j = 0;
+            foreach($result->childNodes as $node) {
+                if($node->nodeType != 1) continue;
+                if($j == 0) {
+                    $url = $node->firstChild->firstChild->getAttribute('href');
+                    // id
+                    preg_match('{id=([0-9]{1,})}', $url, $id);
+                    $id = $id[1];
+                    // url do perfil
+                    $user[$id]['url_perfil'] = $url;
+                    // status
+                    $user[$id]['status'] = $node
+                            ->getElementsByTagName('div')->item(1)
+                            ->getElementsByTagName('font')->item(0)
+                            ->textContent;
+                    if($user[$id]['status'] == 'Online') {
+                        $users_online[] = $id;
+                    }
+                } elseif ($j == 2) {
+                    // ultimo acesso
+                    $user[$id]['ultimo_acesso'] = $node->getElementsByTagName('div')->item(1)->textContent;
+                    $user[$id]['ultimo_acesso'] = explode(':', $user[$id]['ultimo_acesso']);
+                    $user[$id]['ultimo_acesso'] = trim($user[$id]['ultimo_acesso'][1]);
+                    $user[$id]['ultimo_acesso'] = DateTime::createFromFormat('d/m/Y', $user[$id]['ultimo_acesso']);
+                    $user[$id]['ultimo_acesso'] = $user[$id]['ultimo_acesso']->format('Y-m-d');
+                }
+                $this->save($user[$id], $id);
+                $j++;
+            }
+            // Apenas pega dados do usuário se ele não existir
+            $existe = $this->getById($id);
+            if(!$existe['apelido']) {
+                // joga para background
+                $this->runBackground('Robot_Aec', 'getAndSave', array($id));
+            }
+        }
+        if(count($users_online)) {
+            $this->db->update(
+                'usuario',
+                array('status' => 'Offline'),
+                'id NOT IN ('.implode(', ', $users_online).')'
+            );
+        }
+        foreach($user as $id => $u) {
+            $dir = '';
+            $strlen = strlen($id);
+            for($k = $strlen-4; $k >= 0 ; $k--) {
+                $dir = substr($id, $k-$strlen, 1).'/'.$dir;
+            }
+            if(file_exists(realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir.$id.'p1.jpg')) {
+                echo 
+                '<img src="/img/fotos/'.$dir.$id.'p1.jpg"    >';
+            }
+        }
+        //Zend_Debug::dump($user);
+    }
+
+    public function getCookie()
+    {
+        $cookie = shm_get_var($this->shm, 3);
+        if(!$cookie) {
+            $this->login();
+            $cookie = shm_get_var($this->shm, 3);
+        }
+        return unserialize($cookie);
+    }
+    
+    public function renewCookie()
+    {
+        $cookie = $this->getCookie();
+        $client = new Zend_Http_Client();
+        $client->setUri('http://www.amoremcristo.com/')
+                ->setCookieJar($cookie);
+        $response = $client->request();
+        
+        $dom = new Zend_Dom_Query($response->getBody());
+        if($dom->query('.header_login a')->current()->nodeValue) {
+            return $cookie;
+        } else {
+            $this->login();
+        }
+    }
+    
+    public function login()
+    {
+        $client->setUri('http://www.amoremcristo.com/login.asp')
+                ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_main.asp')
+                ->setCookieJar()
+                ->setParameterPost(array(
+                    'go'    => 'now',
+                    'email' => $this->config->site->usuario,
+                    'senha' => $this->config->site->senha
+                ))
+                ->setMethod(Zend_Http_Client::POST);
+        $response = $client->request();
+        if($response->isSuccessful()) {
+            shm_put_var($this->shm, 3, serialize($client->getCookieJar()));
+        }
+    }
+
+    protected function getById($id)
+    {
+        return $this->db->fetchRow('SELECT * FROM usuario WHERE id = '.$id);
     }
 }

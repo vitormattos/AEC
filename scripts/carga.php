@@ -46,10 +46,10 @@ if(!$opts->getOptions()) {
         ? "Rodando" : "Parado");
     echo "\n";
 } elseif($opts->start) {
+    $robot = new Robot_Aec();
     do {
         try{
-            @file_get_contents('http://aec/index/search-online');
-            echo date('Y-m-d H:i:s')."\n";
+            $robot->runBackground('Robot_Aec', 'searchOnline');
         }  catch (Exception $e) {}
         sleep($opts->intervalo?:10);
     } while(1);

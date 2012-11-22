@@ -67,103 +67,9 @@ class IndexController extends Zend_Controller_Action
         //$this->searchOnline();
     }
 
-    public function searchOnlineAction($recursive = false)
+    public function searchOnlineAction()
     {
-        //$this->loginAction();
-        $client = new Zend_Http_Client();
-        a:
-        $client->setUri('http://www.amoremcristo.com/search.asp')
-                ->setParameterGet(array(
-                    'go'      => 'now',
-                    'tb'      => 9,
-                    'gender'  => 0,
-                    'fromage' => 0,
-                    'toage'   => 35,
-                    'pais'    => 28,
-                    'estado'  => 19,
-                    'cidade'  => 6935,
-                    //'pics'    => 1,
-                    'local'   => 1
-                ))
-        //$client->setUri('http://www.amoremcristo.com/search.asp?go=now&tb=9&gender=0&fromage=0&toage=35&pais=28&estado=19&cidade=6935&pics=1&local=1')
-                ->setCookieJar($this->sessionNamespace->cookieJar);
-        $response = $client->request();
-
-        if(!$response->isSuccessful()) return;
-
-        $body = str_replace('&nbsp;', ' ', $response->getBody());
-        $dom = new Zend_Dom_Query($body);
-        // verifica se está autenticado
-        // senão, faz login e refaz a requisição
-        if($dom->query('.header_login a')->count() < 2 && !$recursive) {
-            $this->loginAction();
-            $client->resetParameters();
-            $recursive = true;
-            goto a;
-        }
-
-        $results = $dom->query('.search_results .details_table td');
-        $user = array();
-        $users_online = array();
-        foreach($results as $result) {
-            $j = 0;
-            foreach($result->childNodes as $node) {
-                if($node->nodeType != 1) continue;
-                if($j == 0) {
-                    $url = $node->firstChild->firstChild->getAttribute('href');
-                    // id
-                    preg_match('{id=([0-9]{1,})}', $url, $id);
-                    $id = $id[1];
-                    // url do perfil
-                    $user[$id]['url_perfil'] = $url;
-                    // status
-                    $user[$id]['status'] = $node
-                            ->getElementsByTagName('div')->item(1)
-                            ->getElementsByTagName('font')->item(0)
-                            ->textContent;
-                    if($user[$id]['status'] == 'Online') {
-                        $users_online[] = $id;
-                    }
-                } elseif ($j == 2) {
-                    // ultimo acesso
-                    $user[$id]['ultimo_acesso'] = $node->getElementsByTagName('div')->item(1)->textContent;
-                    $user[$id]['ultimo_acesso'] = explode(':', $user[$id]['ultimo_acesso']);
-                    $user[$id]['ultimo_acesso'] = trim($user[$id]['ultimo_acesso'][1]);
-                    $user[$id]['ultimo_acesso'] = DateTime::createFromFormat('d/m/Y', $user[$id]['ultimo_acesso']);
-                    $user[$id]['ultimo_acesso'] = $user[$id]['ultimo_acesso']->format('Y-m-d');
-                }
-                $this->aec->save($user[$id], $id);
-                $j++;
-            }
-            // Apenas pega dados do usuário se ele não existir
-            $existe = $this->getById($id);
-            if(!$existe['apelido']) {
-                // joga para background
-                $process = realpath(APPLICATION_PATH . '/../scripts/').
-                        '/load_url.php --id '.$id
-                        .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
-                pclose(popen("php $process &", 'r'));
-            }
-        }
-        if(count($users_online)) {
-            $this->db->update(
-                'usuario',
-                array('status' => 'Offline'),
-                'id NOT IN ('.implode(', ', $users_online).')'
-            );
-        }
-        foreach($user as $id => $u) {
-            $dir = '';
-            $strlen = strlen($id);
-            for($k = $strlen-4; $k >= 0 ; $k--) {
-                $dir = substr($id, $k-$strlen, 1).'/'.$dir;
-            }
-            if(file_exists(realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir.$id.'p1.jpg')) {
-                echo 
-                '<img src="/img/fotos/'.$dir.$id.'p1.jpg"    >';
-            }
-        }
-        //Zend_Debug::dump($user);
+        $this->aec->searchOnline();
     }
 
     protected function createTable()
@@ -291,29 +197,6 @@ class IndexController extends Zend_Controller_Action
         $this->db->query($create);
     }
 
-    public function loginAction()
-    {
-        $client = new Zend_Http_Client();
-        $client->setUri('http://www.amoremcristo.com/login.asp')
-                ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_main.asp')
-                ->setCookieJar()
-                ->setParameterPost(array(
-                    'go'    => 'now',
-                    'email' => $this->config->site->usuario,
-                    'senha' => $this->config->site->senha
-                ))
-                ->setMethod(Zend_Http_Client::POST);
-        $response = $client->request();
-        if($response->isSuccessful()) {
-            $this->sessionNamespace->cookieJar = $client->getCookieJar();
-        }
-    }
-
-    protected function getById($id)
-    {
-        return $this->db->fetchRow('SELECT * FROM usuario WHERE id = '.$id);
-    }
-
     public function lastAction()
     {
         $result = $this->db->fetchAll("
@@ -389,10 +272,7 @@ class IndexController extends Zend_Controller_Action
              WHERE usuario.id = {$id}");
         if(!$result || $this->getRequest()->getParam('update') == 1) {
             // joga para background
-            $process = realpath(APPLICATION_PATH . '/../scripts/').
-                    '/load_url.php --id '.$id
-                    .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
-            pclose(popen("php $process &", 'r'));
+            $this->aec->runBackground('Robot_Aec', 'getAndSave', array($id));
             $this->aec->pushPilha($id, true);
             if($this->getRequest()->getParam('update') == 1) {
                 $this->redirect('/index/perfil/?id='.$id);
@@ -454,7 +334,7 @@ class IndexController extends Zend_Controller_Action
                 ))
                 ->setHeaders('Referer', 'http://www.amoremcristo.com/msgsend.asp?id='.$id)
                 ->setMethod(Zend_Http_Client::POST)
-                ->setCookieJar($this->sessionNamespace->cookieJar);
+                ->setCookieJar($this->aec->getCookie());
         $response = $client->request('POST');
 
         $body = str_replace('&nbsp;', ' ', $response->getBody());
@@ -469,7 +349,7 @@ class IndexController extends Zend_Controller_Action
         // se não existir, faz login e refaz a requisição
         if(!count($this->view->mensagens) && @!$recursive) {
             $recursive = 1;
-            $this->loginAction();
+            $this->aec->login();
             goto a;
         }
     }
@@ -485,7 +365,7 @@ class IndexController extends Zend_Controller_Action
                     'p' => $this->nextPage
                 ))
                 ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_emails.asp')
-                ->setCookieJar($this->sessionNamespace->cookieJar);
+                ->setCookieJar($this->aec->getCookie());
         $response = $client->request();
 
         if(!$response->isSuccessful()) return;
@@ -495,7 +375,7 @@ class IndexController extends Zend_Controller_Action
         // verifica se está autenticado
         // senão, faz login e refaz a requisição
         if($dom->query('.header_login a')->count() < 2 && !$recursive) {
-            $this->loginAction();
+            $this->aec->login();
             $client->resetParameters();
             $recursive = true;
             goto a;
@@ -547,12 +427,11 @@ class IndexController extends Zend_Controller_Action
     }
     
     /**
-     * Função recursiva para paginação
+     * retorna a próxima página ou null se não houver próxima
      * 
      * @param Zend_Dom_Query $dom
-     * @param strinig $method_name
      */
-    private function paginate($dom, $method_name)
+    private function paginate($dom)
     {
         $results = $dom->query('.paging ul>li');
         $achou = false;
@@ -563,8 +442,7 @@ class IndexController extends Zend_Controller_Action
                 if($result->getAttribute('class') == 'paging_link')
                 if(is_numeric($result->nodeValue))
                 if($result->nodeValue > $this->nextPage) {
-                    $this->nextPage = $result->nodeValue;
-                    call_user_method($method_name, $this);
+                    return $result->nodeValue;
                 }
                 break;
             }
@@ -607,7 +485,7 @@ class IndexController extends Zend_Controller_Action
                     'is' => $remetente_id
                 ))
                 ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_emails.asp')
-                ->setCookieJar($this->sessionNamespace->cookieJar);
+                ->setCookieJar($this->aec->getCookie());
         $response = $client->request();
 
         $body = str_replace('&nbsp;', ' ', $response->getBody());
