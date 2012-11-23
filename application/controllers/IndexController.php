@@ -228,7 +228,11 @@ class IndexController extends Zend_Controller_Action
                     $change_date = date("F d Y H:i:s.", filemtime($img));
                     $result[$key]['last_change_img'] = $change_date;
                     if($change_date < $field['updated']) {
-                        $this->aec->pushPilha($field['id'], true);
+                        $this->aec->runBackground(
+                            'Robot_Aec',
+                            'getImagem',
+                            array($field['id'], true)
+                        );
                         $result[$key]['img_updated'] = 'sim';
                     } else {
                         $result[$key]['img_updated'] = 'não';
@@ -239,7 +243,11 @@ class IndexController extends Zend_Controller_Action
                     );
                     $result[$key]['img_updated'] = 'sim';
                 } elseif($i==1) {
-                    $this->aec->pushPilha($field['id'], true);
+                    $this->aec->runBackground(
+                        'Robot_Aec',
+                        'getImagem',
+                        array($field['id'], true)
+                    );
                     $result[$key]['img_updated'] = 'sim';
                 } else break;
             }
@@ -268,7 +276,7 @@ class IndexController extends Zend_Controller_Action
         if(!$result || $this->getRequest()->getParam('update') == 1) {
             // joga para background
             $this->aec->runBackground('Robot_Aec', 'getAndSave', array($id));
-            $this->aec->pushPilha($id, true);
+            $this->aec->runBackground('Robot_Aec', 'getImagem', array($id, true));
             if($this->getRequest()->getParam('update') == 1) {
                 $this->aec->lerPaginaMensagem('enviadas');
                 $this->aec->lerPaginaMensagem('recebidas');
@@ -288,7 +296,11 @@ class IndexController extends Zend_Controller_Action
                 $change_date = date("F d Y H:i:s.", filemtime($img));
                 $result['last_change_img'] = $change_date;
                 if($change_date < $result['updated']) {
-                    $this->aec->pushPilha($result['id'], true);
+                    $this->aec->runBackground(
+                        'Robot_Aec',
+                        'getImagem',
+                        array($result['id'], true)
+                    );
                     $result['img_updated'] = 'sim';
                 } else {
                     $result['img_updated'] = 'não';
@@ -298,7 +310,7 @@ class IndexController extends Zend_Controller_Action
                     'alt' => $result['apelido']
                 );
             } elseif($i==1) {
-                $this->aec->pushPilha($result['id']);
+                $this->aec->runBackground('Robot_Aec', 'getImagem', array($result['id']));
             } else break;
         }
         $this->view->user = $result;

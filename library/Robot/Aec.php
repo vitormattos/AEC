@@ -117,14 +117,14 @@ class Robot_Aec {
 
         $dir = realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir;
         if(!file_exists($dir.$id.'t.jpg')) {
-            $this->pushPilha($id, true);
+            $this->this->runBackground('Robot_Aec', 'getImagem', array($id, true));
         } else {
             $user['url_thumb'] = 'http://images.amoremcristo.com/images/usuarios_thumbs'.
                 str_repeat('/0', (12-strlen($dir))/2).'/'.$dir.
                 'usr'.$id.'t1.jpg';
             $change_date = date("F d Y H:i:s.", filemtime($dir.$id.'t.jpg'));
             if($change_date < $user['updated']) {
-                $this->aec->pushPilha($user['id'], true);
+                $this->aec->runBackground('Robot_Aec', 'getImagem', array($user['id'], true));
             }
         }
 
@@ -586,6 +586,45 @@ class Robot_Aec {
                 array('mensagem' => iconv("UTF-8", "ISO-8859-1", $results->current()->nodeValue)),
                 "id = $mensagem_id"
             );
+        }
+    }
+    
+    public function getImagem($id, $force_update)
+    {
+        $dir = '';
+        $strlen = strlen($id);
+        for($k = $strlen-4; $k >= 0 ; $k--) {
+            $dir = substr($id, $k-$strlen, 1).'/'.$dir;
+        }
+        $img_dir = realpath(dirname(__FILE__).'/../public/img/fotos/');
+        if(!is_dir($img_dir.'/'.$dir)) mkdir($img_dir.'/'.$dir, 0777, true);
+        if(file_exists($img_dir.'/'.$dir.$id.'t.jpg') &&
+           file_exists($img_dir.'/'.$dir.$id.'p1.jpg') &&
+           !$force_update) continue;
+
+        $url = '';
+        $strlen = strlen($id);
+        for($k = $strlen-5; $k >= 0 ; $k--) {
+            $url = substr($id, $k-$strlen, 1).'/'.$url;
+        }
+        $url = 'http://images.amoremcristo.com/images/usuarios_thumbs'.
+            str_repeat('/0', (12-strlen($url))/2).'/'.$url.
+            'usr'.$id.'t1.jpg';
+
+        $img = @file_get_contents($url);
+        if($img) {
+            echo $img_dir.'/'.$dir.$id."t.jpg\n";
+            file_put_contents($img_dir.'/'.$dir.$id.'t.jpg', $img);
+            $robot->save(array('url_thumb' => $url), $id);
+            for($k=1;$k<=5;$k++) {
+                $name = str_replace('_thumbs', '', $url);
+                $name = str_replace('t1.jpg', "p$k.jpg", $name);
+                $img = @file_get_contents($name);
+                if($img) {
+                    echo $img_dir.'/'.$dir.$id."p$k.jpg\n";
+                    file_put_contents($img_dir.'/'.$dir.$id."p$k.jpg", $img);
+                } else break;
+            }
         }
     }
 }
