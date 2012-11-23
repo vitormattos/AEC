@@ -43,6 +43,7 @@ class Robot_Aec {
             'username' => $this->config->database->username,
             'password' => $this->config->database->password
         ));
+        $this->createTable();
         
         $this->shm = shm_attach(12345, 524288);
     }
@@ -610,5 +611,130 @@ class Robot_Aec {
                 } else break;
             }
         }
+    }
+
+    public function createTable()
+    {
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS ultimo_acesso(
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                ultimo_acesso varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS denominacao(
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                denominacao varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS estado_civil_de_quem_eu_busco(
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                estado_civil_de_quem_eu_busco varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS usuario_estado_civil_de_quem_eu_busco(
+                estado_civil_de_quem_eu_busco_id INTEGER,
+                usuario_id INTEGER,
+                PRIMARY KEY(estado_civil_de_quem_eu_busco_id, usuario_id)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS tenho_maior_interesse_em_pessoas_das_seguintes_formacoes(
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                tenho_maior_interesse_em_pessoas_das_seguintes_formacoes varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS usuario_tenho_maior_interesse_em_pessoas_das_seguintes_formacoes(
+                tenho_maior_interesse_em_pessoas_das_seguintes_formacoes_id INTEGER,
+                usuario_id INTEGER,
+                PRIMARY KEY(tenho_maior_interesse_em_pessoas_das_seguintes_formacoes_id, usuario_id)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS denominacao_desejada(
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                denominacao_desejada varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS usuario_denominacao_desejada(
+                denominacao_desejada_id INTEGER,
+                usuario_id INTEGER,
+                PRIMARY KEY(denominacao_desejada_id, usuario_id)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS frequencia_igreja_desejada(
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                frequencia_igreja_desejada varchar(255)
+            );";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS usuario_frequencia_igreja_desejada(
+                frequencia_igreja_desejada_id INTEGER,
+                usuario_id INTEGER,
+                PRIMARY KEY(frequencia_igreja_desejada_id, usuario_id)
+            );
+        ";
+        $create_sub[]= "
+            CREATE TABLE IF NOT EXISTS `mensagem` (
+              `id` int(11) NOT NULL,
+              `remetente_id` int(11) NOT NULL,
+              `usuario_id` int(11) NOT NULL,
+              `data_envio` varchar(40) NOT NULL,
+              `status` smallint(6) NOT NULL,
+              `mensagem` text
+            )
+        ";
+        foreach($create_sub as $create) {
+            $this->db->query($create);
+        }
+        $create = "
+            CREATE TABLE IF NOT EXISTS usuario(
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                url_thumb varchar(255),
+                apelido varchar(255),
+                sexo varchar(255),
+                idade varchar(255),
+                pais varchar(255),
+                estado varchar(255),
+                cidade varchar(255),
+                altura varchar(255),
+                peso varchar(255),
+                tipo_fisico varchar(255),
+                tom_de_pele varchar(255),
+                olhos varchar(255),
+                estado_civil varchar(255),
+                formacao varchar(255),
+                profissao varchar(255),
+                nacionalidade varchar(255),
+                tem_filhos varchar(255),
+                quer_ter_filhos varchar(255),
+                fuma varchar(255),
+                bebe varchar(255),
+                denominacao_id INTEGER,
+                importancia_de_religiao_para_mim varchar(255),
+                meu_estilo varchar(255),
+                frequencia_na_igreja varchar(255),
+                considero_me_uma_pessoa TEXT,
+                estou_a_procura_de TEXT,
+                meus_filmes_favoritos TEXT,
+                minhas_musicas_favoritas TEXT,
+                o_que_eu_gosto_de_fazer TEXT,
+                sexo_procurado varchar(255),
+                localidade varchar(255),
+                acho_que_a_faixa_etaria_que_mais_se_encaixa_ao_meu_perfil_e varchar(255),
+                busco_uma_pessoa_com_altura varchar(255),
+                acho_que_o_peso_ideal_de_quem_eu_busco_deve_ser varchar(255),
+                o_tipo_fisico_de_quem_busco_deve_ser varchar(255),
+                busco_uma_pessoa_com_tom_de_pele varchar(255),
+                acho_que_os_olhos_ideais_de_quem_eu_busco_devem_ser varchar(255),
+                desejada_filhos varchar(255),
+                busco_uma_pessoa_que_tenha_a_seguinte_relacao_a_filhos_no_futuro varchar(255),
+                em_relacao_a_fumar_quero_alguem_que varchar(255),
+                em_relacao_a_beber_busco_alguem_que varchar(255),
+                idealmente_a_pessoa_que_busco_deve_ter_o_seguinte_estilo varchar(255),
+                url_perfil varchar(255),
+                status varchar(255),
+                ultimo_acesso TEXT,
+                updated TEXT,
+                created TEXT
+            );
+        ";
+        $this->db->query($create);
     }
 }
