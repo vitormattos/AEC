@@ -278,8 +278,6 @@ class IndexController extends Zend_Controller_Action
             $this->aec->runBackground('Robot_Aec', 'getAndSave', array($id));
             $this->aec->runBackground('Robot_Aec', 'getImagem', array($id, true));
             if($this->getRequest()->getParam('update') == 1) {
-                $this->aec->lerPaginaMensagem('enviadas');
-                $this->aec->lerPaginaMensagem('recebidas');
                 $this->redirect('/index/perfil/?id='.$id);
                 return;
             }
@@ -288,7 +286,7 @@ class IndexController extends Zend_Controller_Action
         $strlen = strlen($result['id']);
         for($k = $strlen-4; $k >= 0 ; $k--) {
             $dir = substr($result['id'], $k-$strlen, 1).'/'.$dir;
-        }            
+        }
         for($i=1;$i<=5;$i++) {
             $img = realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir.$result['id'].'p'.$i.'.jpg';
             if(file_exists($img)) {
@@ -368,9 +366,26 @@ class IndexController extends Zend_Controller_Action
     public function inboxAction()
     {
         $numero_pagina = 1;
-        while($numero_pagina = $this->aec->lerPaginaMensagem('enviadas', $numero_pagina)) {
-            Zend_Debug::dump($numero_pagina);
-        };
+        $this->aec->lerPaginaMensagem('enviadas', $numero_pagina);
+        foreach($this->aec->mensagens as $id => $mensagem) {
+            $dir = '';
+            $strlen = strlen($mensagem['usuario_id']);
+            for($k = $strlen-4; $k >= 0 ; $k--) {
+                $dir = substr($mensagem['usuario_id'], $k-$strlen, 1).'/'.$dir;
+            }
+            $img = realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir.$mensagem['usuario_id'].'t.jpg';
+            if(file_exists($img)) {
+                $mensagem['img_src'] = '/img/fotos/'.$dir.$mensagem['usuario_id'].'t.jpg';
+            } else {
+                $this->aec->runBackground(
+                    'Robot_Aec',
+                    'getImagem',
+                    array($mensagem['usuario_id'])
+                );
+            }
+            $this->aec->mensagens[$id] = $mensagem;
+        }
+        $this->view->mensagens = $this->aec->mensagens;
     }
 }
 

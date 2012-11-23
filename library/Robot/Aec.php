@@ -458,6 +458,11 @@ class Robot_Aec {
                 switch($campo->getLineNo()) {
                     case 2:
                         $url = $campo->firstChild->firstChild->getAttribute('href');
+                        // apelido
+                        $apelido = $campo->firstChild->firstChild->nodeValue;
+                        preg_match('{user_name">(.*)</font></a>}', $campo->C14N(), $apelido);
+                        if(isset($apelido[1])) $apelido = $apelido[1];
+                        else $apelido = null;
                         // usuario_id
                         preg_match('{id=([0-9]{1,})}', $url, $usuario_id);
                         // usuário inativo
@@ -485,7 +490,8 @@ class Robot_Aec {
                 'remetente_id' => $remetente_id,
                 'usuario_id' => $usuario_id,
                 'data_envio' => $data,
-                'status' => $read
+                'status' => $read,
+                'apelido' => $apelido
             );
         }
         $this->saveMessages($this->mensagens);
@@ -529,7 +535,7 @@ class Robot_Aec {
             if(!$result['status'] && $mensagens[$result['id']]['status']) {
                 $this->db->update(
                     'mensagem',
-                    array('status' => $result['status']),
+                    array('status' => $mensagens[$result['id']]['status']),
                     "id = {$result['id']}"
                 );
             }
