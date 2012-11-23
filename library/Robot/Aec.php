@@ -332,7 +332,7 @@ class Robot_Aec {
         $dom = new Zend_Dom_Query($body);
         // verifica se está autenticado
         // senão, faz login e refaz a requisição
-        if($dom->query('.header_login a')->count() < 2 && !$recursive) {
+        if($dom->query('.header_login a')->count() < 2 && !isset($recursive)) {
             $this->login();
             $client->resetParameters();
             $recursive = true;
@@ -386,18 +386,6 @@ class Robot_Aec {
                 'id NOT IN ('.implode(', ', $users_online).')'
             );
         }
-        foreach($user as $id => $u) {
-            $dir = '';
-            $strlen = strlen($id);
-            for($k = $strlen-4; $k >= 0 ; $k--) {
-                $dir = substr($id, $k-$strlen, 1).'/'.$dir;
-            }
-            if(file_exists(realpath(APPLICATION_PATH . '/../public/').'/img/fotos/'.$dir.$id.'p1.jpg')) {
-                echo 
-                '<img src="/img/fotos/'.$dir.$id.'p1.jpg"    >';
-            }
-        }
-        //Zend_Debug::dump($user);
     }
 
     public function getCookie()
@@ -428,6 +416,7 @@ class Robot_Aec {
     
     public function login()
     {
+        $client = new Zend_Http_Client();
         $client->setUri('http://www.amoremcristo.com/login.asp')
                 ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_main.asp')
                 ->setCookieJar()
