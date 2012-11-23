@@ -1,27 +1,45 @@
 <table border="1">
     <tr>
-        <td>Data envio:</td>
-        <td>Status:</td>
-        <td>Foto:</td>
-        <td>Usuário:</td>
-    </tr><?php
-    foreach($this->mensagens as $mensagem) {
+        <td>
+           Recebidas
+        </td>
+        <td>
+           Enviadas
+        </td>
+    </tr>
+    <tr>
+        <?php
+        foreach(array('recebidas', 'enviadas') as $tipo) {
+            ?><td style="vertical-align: top">
+            <table border="1">
+                <tr>
+                    <td>Data envio:</td>
+                    <td>Status:</td>
+                    <td>Foto:</td>
+                    <td>Usuário:</td>
+                </tr><?php
+                foreach($this->mensagens[$tipo] as $mensagem) {
+                    ?>
+                    <tr>
+                        <td><?php echo $mensagem['data_envio'];?></td>
+                        <td>
+                            <img src="/img/Gnome-mail-<?php
+                                echo $mensagem['status'] ? 'read' : 'unread';
+                            ?>.svg" />
+                        </td>
+                        <td>
+                            <img src="<?php echo $mensagem['img_src']; ?>" />
+                        </td>
+                        <td>
+                            <a href="/index/perfil/?id=<?php echo $mensagem['usuario_id'];?>">
+                                <?php echo $mensagem['apelido'];?>
+                            </a>
+                        </td>
+                    </tr><?php
+                }
+            ?></table>
+            </td><?php
+        }
         ?>
-        <tr>
-            <td><?php echo $mensagem['data_envio'];?></td>
-            <td>
-                <img src="/img/Gnome-mail-<?php
-                    echo $mensagem['status'] ? 'read' : 'unread';
-                ?>.svg" />
-            </td>
-            <td>
-                <img src="<?php echo $mensagem['img_src']; ?>" />
-            </td>
-            <td>
-                <a href="/index/perfil/?id=<?php echo $mensagem['usuario_id'];?>">
-                    <?php echo $mensagem['apelido'];?>
-                </a>
-            </td>
-        </tr><?php
-    }
-?></table>
+    </tr>
+</table>
