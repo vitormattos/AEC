@@ -442,7 +442,7 @@ class Robot_Aec {
         $dom = new Zend_Dom_Query($body);
         // verifica se está autenticado
         // senão, faz login e refaz a requisição
-        if($dom->query('.header_login a')->count() < 2 && !$recursive) {
+        if($dom->query('.header_login a')->count() < 2 && !isset($recursive)) {
             $this->login();
             $client->resetParameters();
             $recursive = true;
@@ -543,6 +543,7 @@ class Robot_Aec {
             unset($mensagens[$result['id']]);
         }
         foreach($mensagens as $mensagem) {
+            unset($mensagem['apelido']);
             $this->db->insert('mensagem', $mensagem);
             $this->getMessage($mensagem['id'], $mensagem['remetente_id']);
         }
@@ -574,7 +575,7 @@ class Robot_Aec {
         }
     }
     
-    public function getImagem($id, $force_update)
+    public function getImagem($id, $force_update = false)
     {
         $dir = '';
         $strlen = strlen($id);
