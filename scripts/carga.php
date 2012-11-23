@@ -43,7 +43,7 @@ if(!$opts->getOptions()) {
     exec("ps -ef | grep 'carga.php' | grep -v grep | awk '{print $2}' | xargs kill -9");
 } elseif($opts->status) {
     echo (exec("ps -ef | grep 'carga.php' | grep -v grep | grep -v status")
-        ? "Rodando" : "Parado");
+        ? "Rodando" : "Morto");
     echo "\n";
 } elseif($opts->start) {
     $robot = new Robot_Aec();
