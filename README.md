@@ -26,14 +26,9 @@ site.senha = "sua_senha"
 
 - Crie o banco de dados que a aplicação criará a tabela no primeiro acesso.
 
-- Inicie o processo para coleta de imagens com o seguinte comando:
+- Inicie o robô para monitoramento do site com o seguinte comando:
 <pre>
-php scripts/cronjob.php
-</pre>
-
-- inicie o robô para monitoramento do site com o seguinte comando:
-<pre>
-php scripts/carga.php --start -i 30 > scripts/log3 &
+php scripts/carga.php --start -i 30 &
 </pre>
 Onde:
 <pre>
@@ -41,8 +36,6 @@ Onde:
 --start = inicia processo
 --status = status do processo
 --stop = pára o processo
-
-*scripts/log3* é o arquivo de log que contém a data da última requisição
 </pre>
 
 **OBS1:** tem muito código em hadcode.
@@ -53,7 +46,8 @@ Onde:
     local: Rio de Janeiro/capital
     idade: com menos de 35 anos
 </pre>
-e para alterar, modifique a action *index/search-online* com as informações obtidas na busca desejada
+e para alterar, modifique o método *Robot_AEC::searchOnline* com as informações
+obtidas na url da busca desejada
 
 **OBS3:** a action para exibir os usuários encontrados é *index/last* com o seguinte filtro:
 <pre>
@@ -74,15 +68,17 @@ Este formulário apenas funciona para quem é usuário premium no site, sim, eu
 paguei para ser.
 
 **OBS5:** o script *script/update_all.php* serve para atualizar todos os perfis
-de usuários.
+de usuários que forem retornados pela query informada.
 **CUIDADO** ao rodar este script caso o seu banco já esteja grande, poderá demorar.
 
-**OBS6:** Talvez seja necessário dar permissão em algumas pastas do projeto
+**OBS6:** Talvez seja necessário dar permissão de escrita ao usuário do Apache
+nas seguintes pastas do projeto:
+<pre>
+scripts/
+public/img/fotos/
+</pre>
 
-**OBS7:** A action para verificar as mensagens enviadas é *index/inbox* e
-mensagens recebidas é *index/inbox/?caixa=entrada*. Estas actions necessitam de
-refactor para que, cada página da caixa de entrada seja lida em um processo
-independente assim, evitando sobrecarga e possibilitando também implementação
-de processo para verificação de mensagens. A verificação da caixa de entrada lê
-todas as páginas, necessário fazer refactor para evitar este comportamento e
-possibilitar que apenas a primeira paǵina seja lida
+**OBS7:** A action para verificar as mensagens recebidas é *index/inbox*.
+
+**OBS8** *scripts/log* é o arquivo de log que contém informações de debug da
+execução de métodos em background

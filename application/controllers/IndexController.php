@@ -366,7 +366,7 @@ class IndexController extends Zend_Controller_Action
     public function inboxAction()
     {
         $numero_pagina = 1;
-        $this->aec->lerPaginaMensagem('enviadas', $numero_pagina);
+        $this->aec->lerPaginaMensagem('recebidas', $numero_pagina);
         foreach($this->aec->mensagens as $id => $mensagem) {
             $dir = '';
             $strlen = strlen($mensagem['usuario_id']);

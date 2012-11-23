@@ -280,7 +280,7 @@ class Robot_Aec {
                     ' --class ' . $class_name .
                     ' --method ' . $method .
                     ' --args ' . $args
-                    .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log2';
+                    .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log';
             pclose(popen("php $process &", 'r'));
     }
     
