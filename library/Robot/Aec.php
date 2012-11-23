@@ -86,6 +86,9 @@ class Robot_Aec {
 
         $client->setUri('http://www.amoremcristo.com/profile_view.asp?id='.$id);
         $response = $client->request();
+        
+        if(!is_a($response, 'Zend_Http_Response')) return;
+        
         if(!$response->isSuccessful()) return;
 
         $dir = '';
@@ -305,7 +308,9 @@ class Robot_Aec {
                 ->setCookieJar($this->getCookie());
         try {
             $response = $client->request();
-        } catch (Exception $exc) { }
+        } catch (Exception $exc) { return; }
+
+        if(!is_a($response, 'Zend_Http_Response')) return;
 
         if(!$response->isSuccessful()) return;
 
@@ -386,6 +391,8 @@ class Robot_Aec {
         $client->setUri('http://www.amoremcristo.com/')
                 ->setCookieJar($cookie);
         $response = $client->request();
+
+        if(!is_a($response, 'Zend_Http_Response')) return;
         
         $dom = new Zend_Dom_Query($response->getBody());
         if($dom->query('.header_login a')->current()->nodeValue) {
@@ -408,6 +415,9 @@ class Robot_Aec {
                 ))
                 ->setMethod(Zend_Http_Client::POST);
         $response = $client->request();
+
+        if(!is_a($response, 'Zend_Http_Response')) return;
+
         if($response->isSuccessful()) {
             shm_put_var($this->shm, 3, serialize($client->getCookieJar()));
         }
@@ -437,6 +447,8 @@ class Robot_Aec {
                 ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_emails.asp')
                 ->setCookieJar($this->getCookie());
         $response = $client->request();
+        
+        if(!is_a($response, 'Zend_Http_Response')) return;
 
         if(!$response->isSuccessful()) return;
 
@@ -563,6 +575,8 @@ class Robot_Aec {
                 ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_emails.asp')
                 ->setCookieJar($this->getCookie());
         $response = $client->request();
+        
+        if(!is_a($response, 'Zend_Http_Response')) return;
 
         $body = str_replace('&nbsp;', ' ', $response->getBody());
 

@@ -217,6 +217,8 @@ class IndexController extends Zend_Controller_Action
                 ->setMethod(Zend_Http_Client::POST)
                 ->setCookieJar($this->aec->getCookie());
         $response = $client->request('POST');
+        
+        if(!is_a($response, 'Zend_Http_Response')) return;
 
         $body = str_replace('&nbsp;', ' ', $response->getBody());
         $dom = new Zend_Dom_Query($body);
