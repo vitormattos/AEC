@@ -183,7 +183,9 @@ class IndexController extends Zend_Controller_Action
             } else break;
         }
         $this->view->user = $result;
-        $this->aec->lerPaginaMensagem('recebidas');
+        try {
+            $this->aec->lerPaginaMensagem('recebidas');
+        } catch (Exception $exc) { }
         
         $mensagens = $this->db->fetchAll("
             SELECT *

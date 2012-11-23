@@ -303,7 +303,9 @@ class Robot_Aec {
                     'local'   => 1
                 ))
                 ->setCookieJar($this->getCookie());
-        $response = $client->request();
+        try {
+            $response = $client->request();
+        } catch (Exception $exc) { }
 
         if(!$response->isSuccessful()) return;
 
