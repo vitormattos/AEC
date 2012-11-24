@@ -446,7 +446,16 @@ class Robot_Aec {
                 ))
                 ->setHeaders('Referer', 'http://www.amoremcristo.com/loginadm_emails.asp')
                 ->setCookieJar($this->getCookie());
-        $response = $client->request();
+        try {
+            $response = $client->request();
+        } catch (Exception $exc) {
+            if(!isset($recursive)) {
+                $this->login();
+                $client->resetParameters();
+                $recursive = true;
+                goto a;
+            }
+        }
         
         if(!is_a($response, 'Zend_Http_Response')) return;
 
@@ -604,14 +613,7 @@ class Robot_Aec {
            file_exists($img_dir.'/'.$dir.$id.'p1.jpg') &&
            !$force_update) continue;
 
-        $url = '';
-        $strlen = strlen($id);
-        for($k = $strlen-5; $k >= 0 ; $k--) {
-            $url = substr($id, $k-$strlen, 1).'/'.$url;
-        }
-        $url = 'http://images.amoremcristo.com/images/usuarios_thumbs'.
-            str_repeat('/0', (12-strlen($url))/2).'/'.$url.
-            'usr'.$id.'t1.jpg';
+        $url = $this->getUrlThumb($id);
 
         $img = @file_get_contents($url);
         if($img) {
@@ -753,5 +755,17 @@ class Robot_Aec {
             );
         ";
         $this->db->query($create);
+    }
+    
+    public function getUrlThumb($id)
+    {
+        $url = '';
+        $strlen = strlen($id);
+        for($k = $strlen-5; $k >= 0 ; $k--) {
+            $url = substr($id, $k-$strlen, 1).'/'.$url;
+        }
+        return 'http://images.amoremcristo.com/images/usuarios_thumbs'.
+            str_repeat('/0', (12-strlen($url))/2).'/'.$url.
+            'usr'.$id.'t1.jpg';
     }
 }
