@@ -42,8 +42,13 @@ if(!$opts->getOptions()) {
 } if($opts->stop) {
     exec("ps -ef | grep 'carga.php' | grep -v grep | awk '{print $2}' | xargs kill -9");
 } elseif($opts->status) {
-    echo (exec("ps -ef | grep 'carga.php' | grep -v grep | grep -v status")
-        ? "Rodando" : "Morto");
+    $rodando = exec("ps -ef | grep 'carga.php' | grep -v grep | grep -v status");
+    if($rodando) {
+        $rodando = explode("\n", $rodando);
+        echo 'Rodando - '.count($rodando).' processo'.(count($rodando)>1?'s':'');
+    } else {
+        echo "Morto";
+    }
     echo "\n";
 } elseif($opts->start) {
     $robot = new Robot_Aec();
