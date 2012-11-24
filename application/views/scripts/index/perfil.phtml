@@ -13,7 +13,8 @@ if(!isset($this->user)) {
 <table border="1" style="width: 100%">
 <tr>
     <td>
-        <a href="<?php echo $this->user['url_perfil'];?>" target="blank"><?php
+        <a href="http://www.amoremcristo.com/profile_view.asp?id=<?php
+            echo $this->user['id'];?>" target="blank"><?php
         if(isset($this->user['img_url'])) {
             foreach($this->user['img_url'] as $img) {
                 ?><img src="<?php echo $img['url'];?>" alt="<?php echo $img['alt'];?>" /><?php
@@ -80,6 +81,7 @@ if($this->mensagens) {
     ?>
     <table border="1">
         <tr>
+            <td>De:</td>
             <td>Data envio:</td>
             <td>Status:</td>
             <td>Mensagem:</td>
@@ -87,6 +89,7 @@ if($this->mensagens) {
         foreach($this->mensagens as $mensagem) {
             ?>
             <tr>
+                <td><img src="<?php echo $mensagem['url_thumb'];?>" /></td>
                 <td><?php echo $mensagem['data_envio'];?></td>
                 <td>
                     <img src="/img/Gnome-mail-<?php
