@@ -358,11 +358,14 @@ class Robot_Aec {
                 $this->save($user[$id], $id);
                 $j++;
             }
-            // Apenas pega dados do usuário se ele não existir
-            $existe = $this->getById($id);
-            if(!$existe['apelido']) {
+            $ids[] = $id;
+        }
+        // Apenas pega dados do usuário se ele não existir
+        $existe = $this->getById($ids);
+        foreach($existe as $usuario) {
+            if(!$usuario['apelido']) {
                 // joga para background
-                $this->runBackground('Robot_Aec', 'getAndSave', array($id));
+                $this->runBackground('Robot_Aec', 'getAndSave', array($usuario['id']));
             }
         }
         if(count($users_online)) {
@@ -425,7 +428,13 @@ class Robot_Aec {
 
     protected function getById($id)
     {
-        return $this->db->fetchRow('SELECT * FROM usuario WHERE id = '.$id);
+        if(is_array($id)) {
+            return $this->db->fetchAll(
+                'SELECT * FROM usuario WHERE id IN('.  implode(', ', $id).')'
+            );
+        } else {
+            return $this->db->fetchRow('SELECT * FROM usuario WHERE id = '.$id);
+        }
     }
     
     /**
