@@ -31,9 +31,9 @@
                             <img src="<?php echo $mensagem['img_src']; ?>" />
                         </td>
                         <td>
-                            <a href="/index/perfil/?id=<?php echo $mensagem['usuario_id'];?>">
-                                <?php echo $mensagem['apelido'];?>
-                            </a>
+                            <a href="/index/perfil/?id=<?php echo $mensagem['usuario_id'];?>"><?php
+                                echo iconv("UTF-8", "ISO-8859-1", $mensagem['apelido']);
+                            ?></a>
                         </td>
                     </tr><?php
                 }
