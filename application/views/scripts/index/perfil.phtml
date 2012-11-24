@@ -1,6 +1,15 @@
-<a href="/index/perfil/?id=<?php echo $this->user['id'];?>&update=1">
+<?php
+if(!isset($this->user)) {
+    ?>Perfil sendo processado, a página irá atualizar dentro de 8 segundos
+    caso a página não atualize automaticamente, clique no link abaixo:<br /><br /><?php
+}
+?><a href="/index/perfil/?id=<?php echo $this->user['id'];?>&update=1">
     atualizar
-</a>
+</a><?php
+if(!isset($this->user)) {
+    return;
+}
+?>
 <table border="1" style="width: 100%">
 <tr>
     <td>

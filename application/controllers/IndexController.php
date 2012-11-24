@@ -2,15 +2,6 @@
 
 class IndexController extends Zend_Controller_Action
 {
-
-    /**
-     * Sessão
-     * @var Zend_Session
-     *
-     *
-     */
-    public $sessionNamespace = null;
-
     /**
      * Instância do banco
      * @var Zend_Db_Adapter_Pdo_Mysql
@@ -33,12 +24,6 @@ class IndexController extends Zend_Controller_Action
      * @var Zend_Config
      */
     protected $config = array();
-    
-    /**
-     * Próxima página para a paginação
-     * @var int
-     */
-    protected $nextPage = 1;
 
     public function init()
     {
@@ -54,8 +39,6 @@ class IndexController extends Zend_Controller_Action
             'password' => $this->config->database->password
         ));
         $this->aec->createTable();
-        /* Initialize action controller here */
-        $this->sessionNamespace = new Zend_Session_Namespace('Default');
     }
 
     public function indexAction()
@@ -150,6 +133,9 @@ class IndexController extends Zend_Controller_Action
             $this->aec->runBackground('Robot_Aec', 'getImagem', array($id, true));
             if($this->getRequest()->getParam('update') == 1) {
                 $this->redirect('/index/perfil/?id='.$id);
+                return;
+            } else {
+                $this->view->headMeta()->appendHttpEquiv('refresh','8');
                 return;
             }
         }
