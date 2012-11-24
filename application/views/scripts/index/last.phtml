@@ -4,7 +4,8 @@ foreach($this->users as $user) {
     <table border="1" style="width: 100%">
     <tr>
     <td>
-    <a href="<?php echo $user['url_perfil'];?>" target="blank"><?php
+    <a href="http://www.amoremcristo.com/profile_view.asp?id=<?php
+        echo $user['id'];?>" target="blank"><?php
     if(isset($user['img_url'])) {
         foreach($user['img_url'] as $img) {
             ?><img src="<?php echo $img['url'];?>" alt="<?php echo $img['alt'];?>" /><?php

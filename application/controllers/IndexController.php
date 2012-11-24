@@ -174,8 +174,9 @@ class IndexController extends Zend_Controller_Action
         } catch (Exception $exc) { }
         
         $mensagens = $this->db->fetchAll("
-            SELECT *
+            SELECT mensagem.*, usuario.url_thumb
               FROM mensagem
+              LEFT JOIN usuario ON usuario.id = mensagem.remetente_id
              WHERE usuario_id = $id
                 OR remetente_id = $id
              ORDER BY data_envio
