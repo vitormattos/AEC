@@ -79,6 +79,3 @@ public/img/fotos/
 </pre>
 
 **OBS7:** A action para verificar as mensagens recebidas é *index/inbox*.
-
-**OBS8** *scripts/log* é o arquivo de log que contém informações de debug da
-execução de métodos em background
