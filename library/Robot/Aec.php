@@ -113,6 +113,7 @@ class Robot_Aec {
         $body = $response->getBody();
         $body = str_replace('&nbsp;', ' ', $body);
         $dom = new Zend_Dom_Query($response->getBody());
+        $user = array();
         $results = $dom->query('.subheader, tr.odd td, tr.even td');
         foreach($results as $result) {
             // pula o subheader
@@ -284,7 +285,7 @@ class Robot_Aec {
                     ' --class ' . $class_name .
                     ' --method ' . $method .
                     ' --args ' . $args
-                    ;//.' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log';
+                    .' >> '.realpath(APPLICATION_PATH . '/../scripts/').'/log';
             pclose(popen("php $process &", 'r'));
     }
     
@@ -481,46 +482,50 @@ class Robot_Aec {
             goto a;
         }
 
+        // ID do usuário logado
+        $meu_id = $dom->query('.loginadm_wrapper .left_menu a img')->current();
+        $meu_id = $meu_id->C14N();
+        preg_match('{/usr([0-9]*)}', $meu_id, $meu_id);
+        $meu_id = $meu_id[1];
+        
         $td = new Zend_Dom_Query();
         $results = $dom->query('.details_table tr.even, .details_table tr.odd');
         foreach($results as $result) {
             $td->setDocument($result->C14N());
             $campos = $td->query('td');
+            $i = 0;
             foreach($campos as $campo) {
-                if($campo->getLineNo() == 1) continue;
-                switch($campo->getLineNo()) {
-                    case 2:
-                        $url = $campo->firstChild->firstChild->getAttribute('href');
+                switch($i) {
+                    case 0:
+                        preg_match('{value="([0-9]*)"}', $campo->C14N(), $mensagem_id);
+                        $mensagem_id = $mensagem_id[1];
+                        break;
+                    case 1:
                         // apelido
-                        $apelido = $campo->firstChild->firstChild->nodeValue;
-                        preg_match('{user_name">(.*)</font></a>}', $campo->C14N(), $apelido);
-                        if(isset($apelido[1])) $apelido = $apelido[1];
-                        else $apelido = null;
+                        $apelido = $campo->getElementsByTagName('font')->item(0)->nodeValue;
                         // usuario_id
-                        preg_match('{id=([0-9]{1,})}', $url, $usuario_id);
-                        // usuário inativo
+                        preg_match('{id=([0-9]*)}', $campo->C14N(), $usuario_id);
                         if(!isset($usuario_id[1])) {
-                            continue 3;
+                            preg_match('{/usr([0-9]*)t1.jpg"}', $campo->C14N(), $usuario_id);
+                            // usuário inativo
+                            if(!isset($usuario_id[1])) {
+                                continue 3;
+                            }
                         }
                         $usuario_id = $usuario_id[1];
                         break;
-                    case 3:
-                        $url = $campo->firstChild->firstChild->getAttribute('href');
-                        // mensagem_id
-                        preg_match('{id=([0-9]{1,}).*is=([0-9]{1,})}', $url, $ids);
-                        $mensagem_id = $ids[1];
-                        $remetente_id = $ids[2];
-                        $read = $campo->firstChild->firstChild->getAttribute('style');
-                        $read = strpos($read, 'color:#bdbcbc;')?1:0;
+                    case 2:
+                        $read = strpos($campo->C14N(), 'color:#bdbcbc;')?1:0;
                         break;
-                    case 4:
+                    case 3:
                         $data = $campo->nodeValue;
                         break;
                 }
+                $i++;
             }
             $this->mensagens[$mensagem_id] = array(
                 'id' => $mensagem_id,
-                'remetente_id' => $remetente_id,
+                'remetente_id' => $tipo_pagina == 'recebidas' ? $usuario_id : $meu_id,
                 'usuario_id' => $usuario_id,
                 'data_envio' => $data,
                 'status' => $read,
