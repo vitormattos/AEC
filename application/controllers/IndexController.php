@@ -231,6 +231,7 @@ class IndexController extends Zend_Controller_Action
         $pagina = $this->getRequest()->getParam('pagina');
         foreach(array('recebidas', 'enviadas') as $tipo) {
             $proxima =$this->aec->lerPaginaMensagem($tipo, $pagina?:1);
+            if(!isset($this->aec->mensagens)) continue;
             foreach($this->aec->mensagens as $id => $mensagem) {
                 $dir = '';
                 $strlen = strlen($mensagem['usuario_id']);

@@ -498,6 +498,7 @@ class Robot_Aec {
                 switch($i) {
                     case 0:
                         preg_match('{value="([0-9]*)"}', $campo->C14N(), $mensagem_id);
+                        if(!$mensagem_id) continue 3;
                         $mensagem_id = $mensagem_id[1];
                         break;
                     case 1:

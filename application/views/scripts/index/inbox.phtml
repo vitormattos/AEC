@@ -18,6 +18,7 @@
                     <td>Foto:</td>
                     <td>Usuário:</td>
                 </tr><?php
+                if(isset($this->mensagens[$tipo]))
                 foreach($this->mensagens[$tipo] as $mensagem) {
                     ?>
                     <tr>
