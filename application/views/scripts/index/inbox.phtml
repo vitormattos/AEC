@@ -41,5 +41,15 @@
             </td><?php
         }
         ?>
-    </tr>
+    </tr><?php
+    if($this->proxima) {
+        ?><tr>
+            <td colspan="2" style="text-align: center">
+                <a href="/index/inbox?pagina=<?php
+                echo $this->proxima;
+                ?>"><?php echo $this->proxima; ?></a>
+            </td>
+        </tr><?php
+    }
+    ?>
 </table>

@@ -228,8 +228,9 @@ class IndexController extends Zend_Controller_Action
     public function inboxAction()
     {
         $this->view->mensagens = array();
+        $pagina = $this->getRequest()->getParam('pagina');
         foreach(array('recebidas', 'enviadas') as $tipo) {
-            $this->aec->lerPaginaMensagem($tipo, 1);
+            $proxima =$this->aec->lerPaginaMensagem($tipo, $pagina?:1);
             foreach($this->aec->mensagens as $id => $mensagem) {
                 $dir = '';
                 $strlen = strlen($mensagem['usuario_id']);
@@ -251,6 +252,7 @@ class IndexController extends Zend_Controller_Action
             $this->view->mensagens[$tipo] = $this->aec->mensagens;
             $this->aec->mensagens = array();
         }
+        $this->view->proxima = $proxima;
     }
 }
 
